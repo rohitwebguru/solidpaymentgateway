@@ -31,7 +31,7 @@ class SolidPG_Init
     {
        
         if (is_checkout()) {
-            $available_gateways['solid_payments'] = new WC_Gateway_SolidPG();
+            $available_gateways['solidpg'] = new WC_Gateway_SolidPG();
         }
         // echo"<pre>"; print_r($available_gateways); exit;
         return $available_gateways;

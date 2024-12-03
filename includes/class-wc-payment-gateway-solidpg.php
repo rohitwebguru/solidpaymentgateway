@@ -54,12 +54,12 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $this->init_settings();
         $this->setup_properties();
         // Get settings.
-        $this->id = 'solid_payments';
-        $this->plugin_id = 'woocommerce_' . $this->id . '_';
+        $this->id = 'solidpg';
+        // $this->plugin_id = 'woocommerce_' . $this->id . '_';
         // $this->title = $this->get_option('title');
         // $this->description = $this->get_option('description');
-        $this->title = __('Solid Payments', 'solidpg-payment-woo');
-        $this->description = __('Pay securely using Solid Payments.', 'solidpg-payment-woo');
+        // $this->title = __('Solid Payments', 'solidpg-payment-woo');
+        // $this->description = __('Pay securely using Solid Payments.', 'solidpg-payment-woo');
         // $this->api_key = $this->get_option('api_key');
         // $this->widget_id = $this->get_option('widget_id');
         $this->instructions = $this->get_option('instructions');
@@ -84,8 +84,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
      */
     protected function setup_properties()
     {
-        $this->id = 'solid_payments';
-        $this->plugin_id = 'woocommerce_' . $this->id . '_';
+        // $this->plugin_id = 'woocommerce_' . $this->id . '_';
         $this->icon = apply_filters('woocommerce_solodpg_icon', plugins_url('../public/images/solid-payment-logo.png', __FILE__));
         $this->method_title = __('Solid Payments', 'solidpg-payment-woo');        
         $this->method_description = __('Have your customers pay with Solid.', 'solidpg-payment-woo');
@@ -105,19 +104,19 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
                 'label' => __('Enable Solid Payments', 'solidpg-payment-woo'),
                 'type' => 'checkbox',
                 'description' => '',
-                'default' => 'no',
+                'default' => 'yes',
             ),            
-            'mechant_token' => array(
+            'merchant_token' => array(
                 'title' => __('Merchant Token', 'solidpg-payment-woo'),
                 'type' => 'text',
                 'description' => __('Enter your Merchant Token', 'solidpg-payment-woo'),
-                'id' => 'solidpg_merchant_token',
+                'id' => 'merchant_token',
             ),
             'merchant_entity_id' => array(
                 'title' => __('Merchant Entity ID', 'solidpg-payment-woo'),
                 'type' => 'text',
                 'description' => __('Enter your Merchant Entity ID', 'solidpg-payment-woo'),
-                'id' => 'solidpg_merchant_entity_id',
+                'id' => 'merchant_entity_id',
             ),
             'sandbox_enabled' => array(
                 'title' => __('Sandbox Mode', 'solidpg-payment-woo'),
@@ -367,7 +366,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
             $total_quantity += $item_quantity;
         }
 
-        $url = 'https://sandbox.flocash.com/ecom/ecommerce.do/';
+        $url = 'https://test.solidpayments.net/v1/payments';
 
         var_dump($url);
 

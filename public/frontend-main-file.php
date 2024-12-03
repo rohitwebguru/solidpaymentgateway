@@ -136,7 +136,8 @@ class SolidPG_Payment_Gateway_Frontend
 
                 $order->set_address($billing_address, 'billing');
                 $order->set_address($billing_address, 'shipping');
-
+                error_log("order details: " . $order);
+              
                 $order->set_payment_method('solidpg-payment-woo');
 
                 foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
@@ -154,7 +155,7 @@ class SolidPG_Payment_Gateway_Frontend
                 $currency_code = get_woocommerce_currency();
                 $order->set_total($order_total);
                 $order->save();
-                $order->update_status('completed');
+                // $order->update_status('completed');
                 $cart->empty_cart();
 
                 // save transaction array in postmeta
@@ -217,11 +218,11 @@ class SolidPG_Payment_Gateway_Frontend
         $total_quantity = $cart->get_cart_contents_count();
         $total_price = WC()->cart->total;
 
-        $solidpg_url = SOLIDPG_LIVE_URL;
-        $solidpg_settings = get_option('woocommerce_solid_payments_settings', array());
+        $solidpg_url = SOLIDPG_SANDBOX_URL;
+        $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
         // echo"<pre>"; print_r($solidpg_settings); exit;
         if ($solidpg_settings['sandbox_enabled'] == 'yes') {
-            $solidpg_url = solidpg_SANDBOX_URL;
+            $solidpg_url = SOLIDPG_SANDBOX_URL;
         }
 
         // $merchant_email = $solidpg_settings['merchant_email'];
@@ -232,51 +233,164 @@ class SolidPG_Payment_Gateway_Frontend
         $return_url = get_permalink(get_option('solidpg_return_page'));
 
     ?>
-        <button id="custom-place-order-btn" class="button alt" type="button">Pay with SolidPG</button>
+        <div class="payment-title">
+            <h1>Payment Information</h1>
+        </div>
+
+        <div class="form-container">
+            <div class="field-container">
+                <label for="name">Name</label>
+                <input id="name" maxlength="20" type="text">
+                <input id="paymentbrand" maxlength="20" hidden type="text" value="VISA">
+            </div>
+            <div class="field-container">
+                <label for="cardnumber">Card Number</label>
+                <input id="cardnumber" type="text" pattern="[0-9]*" inputmode="numeric">
+                <svg id="ccicon" class="ccicon" width="750" height="471" viewBox="0 0 750 471" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+                </svg>
+            </div>
+            <div class="field-container">
+                <label for="expirationdate">Expiration (mm/yy)</label>
+                <input id="expirationdate" type="text" pattern="[0-9]*" inputmode="numeric">
+            </div>
+            <div class="field-container">
+                <label for="securitycode">Security Code</label>
+                <input id="securitycode" type="text" pattern="[0-9]*" inputmode="numeric">
+            </div>
+            <button id="custom-place-order-btn" class="button alt" type="button">Pay with SolidPG</button>
+        </div>
+
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/3.4.0/imask.min.js"></script>
         <script>
             jQuery(document).ready(function($) {
+                const $name = $('#name');
+                const $cardnumber = $('#cardnumber');
+                const $expirationdate = $('#expirationdate');
+                const $securitycode = $('#securitycode');
+                const $ccicon = $('#ccicon');
+
+
+                $cardnumber.on('input', function() {
+                    const value = $(this).val().replace(/\D/g, '');
+                    if (value.length > 16) {
+                        $(this).val(value.slice(0, 15));
+                    } else {
+                        $(this).val(value.replace(/(\d{4})(?=\d)/g, '$1 '));
+                    }
+                });
+
+                $('#expirationdate').on('input', function() {
+                    const value = $(this).val().replace(/\D/g, '');
+                    if (value.length > 6) {
+                        $(this).val(value.slice(0, 6));
+                    } else {
+                        const formatted = value
+                            .replace(/^(\d{2})(\d{1,4})?$/, '$1/$2')
+                            .replace(/\/$/, '');
+                        $(this).val(formatted);
+                    }
+                });
+
+
+                $securitycode.on('input', function() {
+                    const value = $(this).val().replace(/\D/g, '');
+                    $(this).val(value.slice(0, 3));
+                });
+
+                // Validation on form submission
+                $('#custom-place-order-btn').on('click', function() {
+                    let isValid = true;
+
+                    const cardNumber = $('#cardnumber').val().replace(/\s/g, ''); // Remove spaces
+                    if (!/^\d{16}$/.test(cardNumber)) {
+                        alert('Card number must be exactly 16 digits.');
+                        isValid = false;
+                    }
+
+                    const expirationDate = $('#expirationdate').val();
+                    if (!/^\d{2}\/\d{4}$/.test(expirationDate)) {
+                        alert('Expiration date must be in MM/YYYY format.');
+                        isValid = false;
+                    }
+
+                    const securityCode = $('#securitycode').val();
+                    if (!/^\d{3}$/.test(securityCode)) {
+                        alert('Security code (CVV) must be exactly 3 digits.');
+                        isValid = false;
+                    }
+
+                    if (isValid) {
+                        console.log('Payment details are valid! Proceeding...');
+                        // Submit the form or trigger the payment process here
+                    }
+                });
 
                 jQuery("input[name='payment_method']").on("change", function() {
                     if (jQuery("#payment_method_solidpg").is(":checked")) {
                         $('#place_order').hide();
-                        $('#custom-place-order-btn').show();
+                        $('.form-container').show();
                     } else {
                         $('#place_order').show();
-                        $('#custom-place-order-btn').hide();
+                        $('.form-container').hide();
                     }
                 })
 
                 if (jQuery("#payment_method_solidpg").is(":checked")) {
                     $('#place_order').hide();
-                    $('#custom-place-order-btn').show();
+                    $('.form-container').show();
 
                 } else {
                     $('#place_order').show();
-                    $('#custom-place-order-btn').hide();
+                    $('.form-container').hide();
                 }
 
                 $('#custom-place-order-btn').on('click', function(e) {
+                    const $nameval = $('#name').val();
+                    const $cardnumberval = $('#cardnumber').val().replace(/\s/g, '');
+                    const $expirationdateval = $('#expirationdate').val();
+                    const $securitycodeval = $('#securitycode').val();
+                    const $paymentbrand = $('#paymentbrand').val();
+
+                    const token = "<?php echo esc_js($merchant_token); ?>"; // Token added
+
                     e.preventDefault();
 
-                    var html = `<form action="<?php echo $solidpg_url; ?>" method="post" id='solidpg-payment-form' style='display:none;'>
-                                <input type="hidden" name="return_url" value="<?php echo $return_url; ?>"/>
-                                <input type="hidden" name="merchant" value="<?php echo esc_attr($merchant_token); ?>"/>
-                                <input type="hidden" name="merchant" value="<?php echo esc_attr($merchant_entity_id); ?>"/>
-                                <input type="hidden" name="order_id" value="<?php echo rand(100000, 999999); ?>"/>
-                                <input type="hidden" name="custom" value="<?php echo rand(100000, 999999); ?>"/>
-                                <input type="hidden" name="item_name" id="item_name" readonly="true" value="<?php echo $item_names_string; ?>"/>
-                                <input type="hidden" name="item_price" id="item_price" value="<?php echo $total_price; ?>"/>
-                                <input type="hidden" name="currency_code"  value="KES"/>
-                                <input type="hidden" name="quantity" id="quantity" value="<?php echo $total_quantity; ?>"/>
-                                <input id="amount" name="amount" value="<?php echo $total_price; ?>" style="width: 100px" readonly="true">
-                                <input type="submit" value="Checkout">
-                            </form>
-                        `;
-
-                    $('body').append(html);
-                    $("#solidpg-payment-form").submit();
+                    $.ajax({
+                        url:  '<?php echo esc_url(rest_url('solidpg/v1/payment')); ?>',
+                        type: "POST",
+                        headers: {
+                            "Authorization": `Bearer <?php echo esc_attr($merchant_token); ?>`,
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        data: {
+                            "entityId": "<?php echo esc_attr($merchant_entity_id); ?>",
+                            "amount": "<?php echo $total_price; ?>",
+                            "currency": "EUR",
+                            "paymentBrand": $paymentbrand,
+                            "paymentType": "DB",
+                            "card_number": $cardnumberval,
+                            "card_holder": $nameval,
+                            "card_expiryMonth": $expirationdateval.split('/')[0],
+                            "card_expiryYear": $expirationdateval.split('/')[1],
+                            "card_cvv": $securitycodeval,
+                            "shopperResultUrl": "<?php echo $return_url; ?>"
+                        },
+                        success: function(response) {
+                            console.log("Payment Success:", response);
+                            if(response.resultDetails.ExtendedDescription == 'Approved'){
+                                alert('success');
+                                window.location.href = '<?php echo esc_url(home_url('/')); ?>/solidpg-thankyou-page/';
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error("Payment Error:", xhr);
+                            alert("Payment failed. Please try again.");
+                        }
+                    });
                 });
-
             });
         </script>
 <?php
