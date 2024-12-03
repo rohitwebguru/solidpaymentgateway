@@ -77,6 +77,8 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         add_action('woocommerce_email_before_order_table', array($this, 'email_instructions'), 10, 3);
         // Hook to display sandbox settings in the admin panel
         add_action('woocommerce_admin_order_data_after_order', array($this, 'output_sandbox_settings'));
+        add_action('woocommerce_order_refunded', 'custom_refund_callback', 10, 2);
+      
     }
 
     /**
@@ -127,6 +129,68 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         );
     }
 
+
+    public function custom_refund_callback($order_id, $refund_id) {
+        // Get the order object
+        $order = wc_get_order($order_id);
+    
+        if (!$order) {
+            error_log('Order not found for refund callback.');
+            return;
+        }
+    
+        // Get refund object
+        $refund = wc_get_order($refund_id);
+    
+        if (!$refund) {
+            error_log('Refund not found.');
+            return;
+        }
+    
+        $refund_amount = $refund->get_amount();
+        $currency = $order->get_currency(); 
+        $transaction_id = $order->get_transaction_id(); 
+    
+        $solidpg_order_id = get_post_meta($order_id, 'solidpg_order_id', true);
+    
+        if (!$solidpg_order_id) {
+            error_log('SolidPG Order ID not found in post meta.');
+            return;
+        }
+    
+        // Prepare refund API request data
+        $api_url = `https://test.solidpayments.net/v1/payments/$solidpg_order_id`;
+        $entityId = '8ac7a4c99289e1cd01928b3ff1b50278';
+        $api_token = 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=';
+        $api_data = array(
+            'entityId' => $entityId,
+            'order_id_solid' => $solidpg_order_id,
+            'amount'  => $refund_amount,
+            'paymentType'  => 'RF',
+            'currency'       => $currency,
+        );
+    
+        // Call the refund API
+        $response = wp_remote_post($api_url, array(
+            'method'      => 'POST',
+            'timeout'     => 45,
+            'headers'     => array(
+                'Authorization' => 'Bearer ' . $api_token,
+                'Content-Type'  => 'application/json',
+            ),
+            'body'        => json_encode($api_data),
+        ));
+    
+        // Handle the API response
+        if (is_wp_error($response)) {
+            error_log('Refund API Error: ' . $response->get_error_message());
+        } else {
+            $response_body = wp_remote_retrieve_body($response);
+            error_log('Refund API Response: ' . $response_body);
+        }
+    }
+    
+  
     /**
      * Check If The Gateway Is Available For Use.
      *

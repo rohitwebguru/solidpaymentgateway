@@ -132,6 +132,7 @@ class SolidPG_Payment_Gateway_Frontend
                     'state' => $customer['state'],
                     'postcode' => $customer['postcode'],
                     'country' => $customer['country'],
+
                 );
 
                 $order->set_address($billing_address, 'billing');
@@ -161,7 +162,7 @@ class SolidPG_Payment_Gateway_Frontend
                 // save transaction array in postmeta
                 update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
                 update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
-                update_post_meta($order->get_id(), 'solidpg_order_id', $_REQUEST['order_id']);
+                update_post_meta($order->get_id(), 'solidpg_order_id', $_GET['order_id_solid']);
 
                 // code for displaying order details
                 $order_id = $order->get_id();
@@ -382,7 +383,7 @@ class SolidPG_Payment_Gateway_Frontend
                             console.log("Payment Success:", response);
                             if(response.resultDetails.ExtendedDescription == 'Approved'){
                                 alert('success');
-                                window.location.href = '<?php echo esc_url(home_url('/')); ?>/solidpg-thankyou-page/';
+                                window.location.href = `<?php echo esc_url(home_url('/')); ?>/solidpg-thankyou-page?order_id_solid=${response.id}`;
                             }
                         },
                         error: function(xhr) {
