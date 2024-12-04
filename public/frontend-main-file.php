@@ -162,7 +162,8 @@ class SolidPG_Payment_Gateway_Frontend
                 // save transaction array in postmeta
                 update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
                 update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
-                update_post_meta($order->get_id(), 'solidpg_order_id', $_GET['order_id_solid']);
+                update_post_meta($order->get_id(), 'solidpg_order_id', $order->get_id());
+                update_post_meta($order->get_id(), 'solidpg_api_id', $_GET['order_id_solid']);
 
                 // code for displaying order details
                 $order_id = $order->get_id();

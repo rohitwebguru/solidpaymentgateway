@@ -46,22 +46,15 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
     public function __construct()
     {
         // Setup general properties.
-       
+        $this->setup_properties();
 
         // Load the settings.
-      
         $this->init_form_fields();
         $this->init_settings();
-        $this->setup_properties();
         // Get settings.
-        $this->id = 'solidpg';
-        // $this->plugin_id = 'woocommerce_' . $this->id . '_';
-        // $this->title = $this->get_option('title');
-        // $this->description = $this->get_option('description');
-        // $this->title = __('Solid Payments', 'solidpg-payment-woo');
-        // $this->description = __('Pay securely using Solid Payments.', 'solidpg-payment-woo');
-        // $this->api_key = $this->get_option('api_key');
-        // $this->widget_id = $this->get_option('widget_id');
+        
+        $this->title = $this->get_option('title');
+        $this->description = $this->get_option('description');
         $this->instructions = $this->get_option('instructions');
         $this->enable_for_methods = $this->get_option('enable_for_methods', array());
         $this->enable_for_virtual = $this->get_option('enable_for_virtual', 'yes') === 'yes';
@@ -77,7 +70,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         add_action('woocommerce_email_before_order_table', array($this, 'email_instructions'), 10, 3);
         // Hook to display sandbox settings in the admin panel
         add_action('woocommerce_admin_order_data_after_order', array($this, 'output_sandbox_settings'));
-        add_action('woocommerce_order_refunded', 'custom_refund_callback', 10, 2);
+        add_action('woocommerce_order_refunded', array($this, 'custom_refund_callback'), 10, 2);
       
     }
 
@@ -86,13 +79,14 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
      */
     protected function setup_properties()
     {
+        $this->id = 'solidpg';
         // $this->plugin_id = 'woocommerce_' . $this->id . '_';
         $this->icon = apply_filters('woocommerce_solodpg_icon', plugins_url('../public/images/solid-payment-logo.png', __FILE__));
         $this->method_title = __('Solid Payments', 'solidpg-payment-woo');        
         $this->method_description = __('Have your customers pay with Solid.', 'solidpg-payment-woo');
         $this->has_fields = false;
-        $this->supports = array('products');
-        $this->enabled = 'yes';
+        // $this->supports = array('products');
+        // $this->enabled = 'yes';
     }
 
     /**
@@ -151,10 +145,14 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $currency = $order->get_currency(); 
         $transaction_id = $order->get_transaction_id(); 
     
-        $solidpg_order_id = get_post_meta($order_id, 'solidpg_order_id', true);
-    
+        $solidpg_order_id = get_post_meta($order_id, 'solidpg_api_id', true);
+        error_log("order details: " . $solidpg_order_id);
+        error_log("refund_amount: " . $refund_amount);
+        error_log("currency: " . $currency);
+        error_log("transaction_id: " . $transaction_id);
+        error_log("order: " . $order);
         if (!$solidpg_order_id) {
-            error_log('SolidPG Order ID not found in post meta.');
+            error_log('This Order has not been placed with Solid Pyament Gateway');
             return;
         }
     
@@ -162,28 +160,29 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $api_url = `https://test.solidpayments.net/v1/payments/$solidpg_order_id`;
         $entityId = '8ac7a4c99289e1cd01928b3ff1b50278';
         $api_token = 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=';
-        $api_data = array(
+        $api_data = [
             'entityId' => $entityId,
-            'order_id_solid' => $solidpg_order_id,
-            'amount'  => $refund_amount,
-            'paymentType'  => 'RF',
-            'currency'       => $currency,
-        );
+            'amount' => $refund_amount,
+            'currency' => $currency,
+            'paymentType' => 'RF',
+        ];
+     
+        $ch = curl_init($api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($api_data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $api_token,
+            'Content-Type: application/x-www-form-urlencoded',
+        ]);
     
-        // Call the refund API
-        $response = wp_remote_post($api_url, array(
-            'method'      => 'POST',
-            'timeout'     => 45,
-            'headers'     => array(
-                'Authorization' => 'Bearer ' . $api_token,
-                'Content-Type'  => 'application/json',
-            ),
-            'body'        => json_encode($api_data),
-        ));
+        // Execute the request and capture the response
+        $response = curl_exec($ch);
+        curl_close($ch);
     
         // Handle the API response
         if (is_wp_error($response)) {
-            error_log('Refund API Error: ' . $response->get_error_message());
+            error_log('Refund API Error: ' . $response);
         } else {
             $response_body = wp_remote_retrieve_body($response);
             error_log('Refund API Response: ' . $response_body);
