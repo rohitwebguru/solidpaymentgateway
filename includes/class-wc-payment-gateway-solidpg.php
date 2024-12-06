@@ -200,6 +200,8 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $order = null;
         $needs_shipping = false;
 
+        $available = parent::is_available();
+
         // Test if shipping is needed first.
         if (WC()->cart && WC()->cart->needs_shipping()) {
             $needs_shipping = true;
@@ -240,6 +242,10 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
             if (!count($this->get_matching_rates($canonical_rate_ids))) {
                 return false;
             }
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            wc_get_logger()->info('SolidPG availability check: ' . ($available ? 'Available' : 'Unavailable'), array('source' => 'solidpg'));
         }
 
         return parent::is_available();
