@@ -128,9 +128,15 @@ function handle_solidpg_payment(WP_REST_Request $request) {
     return new WP_REST_Response(json_decode($response), 200);
 }
 
-add_action('woocommerce_blocks_payment_method_type_registration', function ($payment_method_registry) {
-    if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
-        require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';
-        $payment_method_registry->register(new SolidPG_Blocks_Integration());
-    }
-});
+// add_action('woocommerce_blocks_payment_method_type_registration', function ($payment_method_registry) {
+//     if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+//         require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';
+//         $payment_method_registry->register(new SolidPG_Blocks_Integration());
+//         error_log('SolidPG registered successfully');
+//     }else{
+//         error_log('Payment method registry is missing the register method');
+//     }
+// });
+
+
+
