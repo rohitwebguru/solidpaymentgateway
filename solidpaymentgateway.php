@@ -20,6 +20,7 @@ define('SOLIDPG_LIVE_URL', 'https://fcms.flocash.com/ecom/ecommerce.do');
 define('MERCHANT_TOKEN', 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=');
 define('MERCHANT_ENTITY_ID', '8ac7a4c99289e1cd01928b3ff1b50278');
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
@@ -137,6 +138,16 @@ function handle_solidpg_payment(WP_REST_Request $request) {
 //         error_log('Payment method registry is missing the register method');
 //     }
 // });
+
+add_action(
+	'woocommerce_blocks_payment_method_type_registration',
+	function( PaymentMethodRegistry $payment_method_registry ) {
+        require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';
+		$payment_method_registry->register( new SolidPG_Blocks_Integration() );
+	}
+);
+
+	
 
 
 

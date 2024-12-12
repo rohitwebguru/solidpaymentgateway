@@ -1,49 +1,36 @@
-const { createElement } = wp.element;
+const { decodeEntities } = wp.htmlEntities;
 
-// Assuming SolidPGButtonData is already localized in the script with the button HTML
-const SolidPGPaymentMethod = function() {
-    // Access the localized button HTML
-    const buttonHTML = SolidPGButtonData.button_html;
+// Get settings for the SolidPG payment method
+const solidPGSettings = window.wc.wcSettings.getSetting('solidpg');
 
-    // Create the container for the payment method
-    const paymentMethodContainer = document.createElement('div');
-
-    // Create the title for the payment method
-    const title = document.createElement('h2');
-    title.textContent = 'SolidPG Payment Gateway';
-
-    // Create the description paragraph
-    const description = document.createElement('p');
-    description.textContent = 'Pay securely using SolidPG payment method.';
-
-    // Append the title and description to the container
-    paymentMethodContainer.appendChild(title);
-    paymentMethodContainer.appendChild(description);
-
-    // Create a div for the button and insert the raw HTML
-    const buttonContainer = document.createElement('div');
-    buttonContainer.innerHTML = buttonHTML;
-
-    // Append the button to the payment method container
-    paymentMethodContainer.appendChild(buttonContainer);
-
-    return paymentMethodContainer;
+// The content displayed when the SolidPG payment method is selected
+const SolidPGContent = () => {
+    return decodeEntities(solidPGSettings?.description || 'Pay securely using SolidPG Payment Gateway.');
 };
 
-// Wait for `wc.blocksRegistry` to be available
-function waitForWooCommerceBlocks() {
-    // if (typeof wc !== 'undefined' && wc.blocksRegistry) {
-        // Register the payment method when wc.blocksRegistry is available
-        wc.blocksRegistry.registerPaymentMethod('solidpg', {
-            methodTitle: 'SolidPG Payment',
-            methodDescription: 'Use SolidPG for fast and secure payments',
-            content: SolidPGPaymentMethod(),
-        });
-    // } else {
-        // Retry after a short delay if `wc.blocksRegistry` is not yet available
-        setTimeout(waitForWooCommerceBlocks, 100);
-    // }
+// The label/title for the SolidPG payment method
+const SolidPGLabel = (props) => {
+    const { PaymentMethodLabel } = props.components;
+    return (
+        <PaymentMethodLabel text={decodeEntities(solidPGSettings?.title || 'SolidPG Payment Gateway')} />
+    );
+};
+
+// Register the SolidPG payment method for WooCommerce blocks
+const solidPGPaymentMethod = {
+    name: 'solidpg', // Unique identifier for the payment method
+    label: <SolidPGLabel />, // Label displayed in the checkout
+    content: <SolidPGContent />, // Content displayed when selected
+    edit: <SolidPGContent />, // Content displayed in the editor
+    canMakePayment: () => true, // Enable the payment method (add any custom logic if needed)
+    supports: {
+        features: solidPGSettings?.supports ?? [], // Supported features (e.g., refunds)
+    },
+};
+
+// Register the SolidPG payment method in the WooCommerce blocks registry
+if (typeof wc !== 'undefined' && wc.blocksRegistry) {
+    wc.blocksRegistry.registerPaymentMethod(solidPGPaymentMethod);
 }
 
-// Call the function to check and register the payment method
-waitForWooCommerceBlocks();
+

@@ -1,102 +1,92 @@
-<?php
+
+    <?php
+// namespace MyPlugin\SolidPG_Blocks_Integration;
+
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
-class SolidPG_Blocks_Integration extends AbstractPaymentMethodType {
-    public function get_name() {
-        error_log('solidpg_name');
-        return 'solidpg'; // Gateway ID
-    }
+final class SolidPG_Blocks_Integration extends AbstractPaymentMethodType {
+	/**
+	 * This property is a string used to reference your payment method. It is important to use the same name as in your
+	 * client-side JavaScript payment method registration.
+	 *
+	 * @var string
+	 */
+	protected $name = 'solidpg';
 
-    public function get_payment_method_script_handles() {
-        // Register the JS script for the payment gateway
-        wp_register_script(
-            'solidpg-blocks-script',
-            plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
-            ['wp-element', 'wc-blocks-registry'],
-            '1.0',
-            true
-        );
-    
-        // Register the CSS file
-        wp_register_style(
-            'solidpg-blocks-style',
-            plugin_dir_url(__FILE__) . '../public/css/style.css',
-            [],
-            '1.0'
-        );
-    
-        // Ensure the frontend-main-file.php is included and the button HTML is passed to JS
-        include_once plugin_dir_path(__FILE__) . '../public/frontend-main-file.php';
-    
-        // Get the button HTML from the add_custom_button function
-        $button_html = $this->add_custom_button();
-    
-        // Localize the script to pass the button HTML to JS
-        wp_localize_script(
-            'solidpg-blocks-script', // The handle of the script
-            'SolidPGButtonData',     // The JavaScript object that will contain the localized data
-            [
-                'button_html' => $button_html, // Add the button HTML here
-            ]
-        );
-        wp_enqueue_script('solidpg-blocks-script');
-        return ['solidpg-blocks-script'];
-    }
-    
-    public function add_custom_button() {
-        // This is the PHP function that generates the button HTML
-        return '<button id="solidpg-custom-button" class="solidpg-button">Custom SolidPG Button</button>';
-    }
-    
+	/**
+	 * Initializes the payment method.
+	 * 
+	 * This function will get called during the server side initialization process and is a good place to put any settings
+	 * population etc. Basically anything you need to do to initialize your gateway. 
+	 * 
+	 * Note, this will be called on every request so don't put anything expensive here.
+	 */
+	public function initialize() {
+		$this->settings = get_option( 'woocommerce_solidpg_settings', [] );
+	}
 
-    public function is_active() {
-        error_log('SolidPG is_active called');
-        return true;
-    }
+	/**
+	 * This should return whether the payment method is active or not. 
+	 * 
+	 * If false, the scripts will not be enqueued.
+	 *
+	 * @return boolean
+	 */
+	public function is_active() {
+		return filter_var( $this->get_setting( 'enabled', false ), FILTER_VALIDATE_BOOLEAN );
+	}
 
-    public function get_supported_features() {
-        return ['refunds']; // Add features your gateway supports
-    }
+	/**
+	 * Returns an array of scripts/handles to be registered for this payment method.
+	 * 
+	 * In this function you should register your payment method scripts (using `wp_register_script`) and then return the 
+	 * script handles you registered with. This will be used to add your payment method as a dependency of the checkout script 
+	 * and thus take sure of loading it correctly. 
+	 * 
+	 * Note that you should still make sure any other asset dependencies your script has are registered properly here, if 
+	 * you're using Webpack to build your assets, you may want to use the WooCommerce Webpack Dependency Extraction Plugin
+	 * (https://www.npmjs.com/package/@woocommerce/dependency-extraction-webpack-plugin) to make this easier for you.
+	 *
+	 * @return array
+	 */
+	public function get_payment_method_script_handles() {
+		wp_register_script(
+			'solidpg',
+			plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
+			[],
+			'1.0.0',
+			true
+		);
+		return [ 'solidpg' ];
+	}
 
-    /**
-     * Initialize the integration (required by IntegrationInterface).
-     *
-     * @return void
-     */
-    public function initialize() {
-        error_log('Initializing SolidPG Gateway');
+	/**
+	 * Returns an array of script handles to be enqueued for the admin.
+	 * 
+	 * Include this if your payment method has a script you _only_ want to load in the editor context for the checkout block. 
+	 * Include here any script from `get_payment_method_script_handles` that is also needed in the admin.
+	 */
+	public function get_payment_method_script_handles_for_admin() {
+		return $this->get_payment_method_script_handles();
+	}
 
-        add_action('woocommerce_blocks_payment_method_type_registration', function ($registry) {
-            $registry->register($this);
-        });
-
-        // Enqueue frontend assets
-        // add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_scripts']);
-    }
-  
-    /**
-     * Enqueue Frontend Scripts for the Gateway.
-     *
-     * @return void
-     */
-    // public function enqueue_frontend_scripts() {
-    //     // Include the frontend-main-file.php for rendering custom gateway frontend
-    //     include_once plugin_dir_path(__FILE__) . '../public/frontend-main-file.php';
-    
-    //     // Optionally enqueue CSS or JavaScript for your gateway
-    //     wp_enqueue_script(
-    //         'solidpg-blocks-script',
-    //         plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
-    //         ['jquery'],
-    //         '1.0',
-    //         true
-    //     );
-    
-    //     wp_enqueue_style(
-    //         'solidpg-blocks-style',
-    //         plugin_dir_url(__FILE__) . '../public/css/style.css',
-    //         [],
-    //         '1.0'
-    //     );
-    // }    
+	/**
+	 * Returns an array of key=>value pairs of data made available to the payment methods script client side.
+	 * 
+	 * This data will be available client side via `wc.wcSettings.getSetting`. So for instance if you assigned `stripe` as the 
+	 * value of the `name` property for this class, client side you can access any data via: 
+	 * `wc.wcSettings.getSetting( 'stripe_data' )`. That would return an object matching the shape of the associative array 
+	 * you returned from this function.
+	 *
+	 * @return array
+	 */
+	public function get_payment_method_data() {
+		return [
+			'title'       => $this->get_setting( 'title' ),
+			'description' => $this->get_setting( 'description' ),
+			'supports'    => $this->get_supported_features(),
+		];
+	}
 }
+
+	
