@@ -403,7 +403,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $order = wc_get_order($order_id);
 
         if ($order->get_total() > 0) {
-            $this->solidpg_payment_processing();
+            $this->solidpg_payment_processing( $order );
         } else {
             $order->payment_complete();
         }
@@ -420,24 +420,20 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
 
     private function solidpg_payment_processing($order)
     {
-        print_r($order);
-        $amount = intval($order->get_total());
-        var_dump($amount);
+        $amount = intval($order->get_total());        
         $currency_code = $order->get_currency();
         $customer_id = $order->get_customer_id();
-        $order_id = $order->get_id();
-
+        $order_id = $order->get_id();        
+        $total_quantity = 0;
         // Get and Loop Over Order Items
         foreach ($order->get_items() as $item_id => $item) {
             $product_name = $item->get_name();
             $item_price = $item->get_subtotal();
             $item_quantity = $item->get_quantity();
-            $total_quantity += $item_quantity;
+            $total_quantity+= $item_quantity;
         }
-
+        
         $url = 'https://test.solidpayments.net/v1/payments';
-
-        var_dump($url);
 
         $response = wp_remote_post($url, array('timeout' => 30));
 
