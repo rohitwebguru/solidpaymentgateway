@@ -14,6 +14,14 @@ class SolidPG_Payment_Gateway_Frontend
     {
         // Enqueue the style from your plugin's public/css folder
         wp_enqueue_style('solidpg-payment-style', plugins_url('/css/style.css', __FILE__));
+        wp_register_script(
+			'solidpg',
+			plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
+			[],
+			'1.0.0',
+			true
+		);
+        wp_enqueue_script('solidpg');
     }
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)

@@ -3,7 +3,6 @@
 // namespace MyPlugin\SolidPG_Blocks_Integration;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
-
 final class SolidPG_Blocks_Integration extends AbstractPaymentMethodType {
 	/**
 	 * This property is a string used to reference your payment method. It is important to use the same name as in your
