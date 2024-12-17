@@ -15,8 +15,8 @@ const SolidPGLabel = function () {
 };
 
 const CardInputForm = () => {
-    return createElement('div', { id: 'card-input-form' }, [
-        createElement('label', { key: 'cardNumberLabel' }, [
+    return createElement('div', { id: 'card-input-form', style: { padding: '20px', fontFamily: 'Arial, sans-serif' } }, [
+        createElement('label', { key: 'cardNumberLabel', style: { display: 'block', marginBottom: '10px' } }, [
             'Card Number',
             createElement('input', {
                 key: 'cardNumberInput',
@@ -25,9 +25,10 @@ const CardInputForm = () => {
                 placeholder: 'Enter card number',
                 maxLength: 16,
                 required: true,
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'expiryDateLabel' }, [
+        createElement('label', { key: 'expiryDateLabel', style: { display: 'block', marginBottom: '10px' } }, [
             'Expiration Date',
             createElement('input', {
                 key: 'expiryDateInput',
@@ -36,9 +37,10 @@ const CardInputForm = () => {
                 placeholder: 'MM/YY',
                 maxLength: 10,
                 required: true,
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'cvvLabel' }, [
+        createElement('label', { key: 'cvvLabel', style: { display: 'block', marginBottom: '10px' } }, [
             'CVV',
             createElement('input', {
                 key: 'cvvInput',
@@ -47,9 +49,10 @@ const CardInputForm = () => {
                 placeholder: 'Enter CVV',
                 maxLength: 3,
                 required: true,
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'cardholderNameLabel' }, [
+        createElement('label', { key: 'cardholderNameLabel', style: { display: 'block', marginBottom: '10px' } }, [
             'Cardholder Name',
             createElement('input', {
                 key: 'cardholderNameInput',
@@ -57,10 +60,12 @@ const CardInputForm = () => {
                 name: 'cardholderName',
                 placeholder: 'Enter cardholder name',
                 required: true,
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
     ]);
 };
+
 
 const SolidPGPaymentContent = () => {
     // Single form wrapping all input elements
