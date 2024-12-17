@@ -77,7 +77,13 @@ add_action('rest_api_init', function() {
 
 // Define the callback function for the endpoint
 function handle_solidpg_payment(WP_REST_Request $request) {
-    // Retrieve the data from the request
+    $flocash_settings = get_option('woocommerce_solidpg_settings', array());
+      
+    if ($flocash_settings['sandbox_enabled'] == 'yes') {
+        $url = SOLIDPG_SANDBOX_URL;
+    }else{
+        $url = SOLIDPG_LIVE_URL;
+    }
     $card_number = $request->get_param('card_number');
     $card_holder = $request->get_param('card_holder');
     $expiry_month = $request->get_param('card_expiryMonth');
@@ -88,9 +94,9 @@ function handle_solidpg_payment(WP_REST_Request $request) {
     $payment_brand = $request->get_param('paymentBrand');
     $payment_type = $request->get_param('paymentType');
     $return_url = $request->get_param('shopperResultUrl');
-    $merchant_token = MERCHANT_TOKEN; 
-    $merchant_entity_id = MERCHANT_ENTITY_ID;
-    $solidpg_url = SOLIDPG_SANDBOX_URL; 
+    $merchant_token = $flocash_settings['merchant_token']; 
+    $merchant_entity_id = $flocash_settings['merchant_entity_id'];
+    $solidpg_url = $url; 
 
     // Prepare data for SolidPG API
     $data = [

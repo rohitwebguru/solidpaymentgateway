@@ -86,6 +86,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $this->has_fields = false;
         // $this->supports = array('products');
         // $this->enabled = 'yes';
+        
     }
 
     /**
@@ -122,7 +123,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         );
     }
 
-
+    
     public function custom_refund_callback($order_id, $refund_id) {
         // Get the order object
         $order = wc_get_order($order_id);
@@ -154,11 +155,17 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
             error_log('This Order has not been placed with Solid Pyament Gateway');
             return;
         }
-    
+        $flocash_settings = get_option('woocommerce_solidpg_settings', array());
+
+        if ($flocash_settings['sandbox_enabled'] == 'yes') {
+            $url = SOLIDPG_SANDBOX_URL;
+        }else{
+            $url = SOLIDPG_LIVE_URL;
+        }
         // Prepare refund API request data
-        $api_url = `https://test.solidpayments.net/v1/payments/$solidpg_order_id`;
-        $entityId = '8ac7a4c99289e1cd01928b3ff1b50278';
-        $api_token = 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=';
+        $api_url = `$url/$solidpg_order_id`;
+        $entityId = $flocash_settings['merchant_entity_id'];
+        $api_token = $flocash_settings['merchant_token'];
         $api_data = [
             'entityId' => $entityId,
             'amount' => $refund_amount,
@@ -431,8 +438,14 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
             $item_quantity = $item->get_quantity();
             $total_quantity+= $item_quantity;
         }
-        
-        $url = 'https://test.solidpayments.net/v1/payments';
+        $flocash_settings = get_option('woocommerce_solidpg_settings', array());
+      
+        if ($flocash_settings['sandbox_enabled'] == 'yes') {
+            $url = SOLIDPG_SANDBOX_URL;
+        }else{
+            $url = SOLIDPG_LIVE_URL;
+        }
+        // $url = 'https://test.solidpayments.net/v1/payments';
 
         $response = wp_remote_post($url, array('timeout' => 30));
 

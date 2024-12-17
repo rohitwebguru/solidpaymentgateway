@@ -21,7 +21,11 @@ class SolidPG_Payment_Gateway_Frontend
 			'1.0.0',
 			true
 		);
-        wp_enqueue_script('solidpg');
+        $flocash_settings = get_option('woocommerce_flocash_settings', array());
+
+        if ($flocash_settings['sandbox_enabled'] == 'yes') {
+            wp_enqueue_script('solidpg');
+        }
     }
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)
