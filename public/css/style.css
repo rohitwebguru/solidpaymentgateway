@@ -387,3 +387,6 @@ input {
   font-size: 18px;
 }
 }
+.wc-block-checkout__terms, .wc-block-checkout__actions {
+  display: none !important;
+}

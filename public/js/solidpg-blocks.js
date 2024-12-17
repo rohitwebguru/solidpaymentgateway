@@ -1,6 +1,7 @@
 // Import required modules (if applicable)
 const { createElement } = wp.element;
 const { decodeEntities } = wp.htmlEntities;
+const { useState } = wp.element;
 
 // Get settings for the SolidPG payment method
 const solidPGSettings = window.wc.wcSettings.getSetting('solidpg');
@@ -14,101 +15,193 @@ const SolidPGLabel = function () {
     return decodeEntities(solidPGSettings?.title || 'SolidPG Payment Gateway');
 };
 
+
 const CardInputForm = () => {
+    // State variables to store form input values
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiryDate, setExpiryDate] = useState('');
+    const [cvv, setCvv] = useState('');
+    const [cardholderName, setCardholderName] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // State for managing loader visibility
+
+    // Function to format the expiration date as MM/YYYY
+    const formatExpiryDate = (event) => {
+        let value = event.target.value.replace(/\D/g, ''); // Remove all non-digit characters
+        if (value.length > 2 && value.length <= 6) {
+            value = value.slice(0, 2) + '/' + value.slice(2);
+        }
+        setExpiryDate(value); // Update the state for expiryDate
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        setIsLoading(true); // Show loader
+
+        let isValid = true;
+
+        // Validate card number (must be 16 digits)
+        if (!/^\d{16}$/.test(cardNumber)) {
+            alert('Card number must be exactly 16 digits.');
+            isValid = false;
+        }
+
+        // Validate expiration date (must be MM/YYYY format)
+        if (!/^\d{2}\/\d{4}$/.test(expiryDate)) {
+            alert('Expiration date must be in MM/YYYY format.');
+            isValid = false;
+        }
+
+        // Validate CVV (must be exactly 3 digits)
+        if (!/^\d{3}$/.test(cvv)) {
+            alert('CVV must be exactly 3 digits.');
+            isValid = false;
+        }
+
+        // Validate cardholder name
+        if (!cardholderName) {
+            alert('Cardholder name is required.');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            setIsLoading(false); // Hide loader if validation fails
+            return;
+        }
+
+        // Extract month and year from expiryDate
+        const [month, year] = expiryDate.split('/');
+
+        // Prepare data to send
+        const formData = {
+            "entityId": solidpgData.merchantEntityId,
+            "amount": solidpgData.total_price,
+            "currency": "EUR",
+            "paymentBrand": 'VISA',
+            "paymentType": "DB",
+            "card_number": cardNumber,
+            "card_holder": cardholderName,
+            "card_expiryMonth": month,
+            "card_expiryYear": year,
+            "card_cvv": cvv,
+            "shopperResultUrl": solidpgData.returnUrl,
+        };
+
+        // Send data to the specified URL using fetch
+        fetch(`${solidpgData.home_url}/wp-json/solidpg/v1/payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${solidpgData.merchantToken}`,
+            },
+            body: JSON.stringify(formData),
+        })
+            .then(response => response.json())
+            .then(data => {
+                setIsLoading(false); // Hide loader
+                // Handle success response
+                if (data.resultDetails.ExtendedDescription === 'Approved') {
+                    window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}`;
+                }
+            })
+            .catch(error => {
+                setIsLoading(false); // Hide loader on error
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            });
+    };
+
     return createElement('div', { id: 'card-input-form', style: { padding: '20px', fontFamily: 'Arial, sans-serif' } }, [
-        createElement('label', { key: 'cardNumberLabel', style: { display: 'block', marginBottom: '10px' } }, [
+       
+        createElement('label', { key: 'cardNumberLabel', style: { display: 'block', marginBottom: '10px', fontSize: '12px', } }, [
             'Card Number',
             createElement('input', {
                 key: 'cardNumberInput',
                 type: 'text',
+                id: 'cardNumberInput',
                 name: 'cardNumber',
                 placeholder: 'Enter card number',
                 maxLength: 16,
                 required: true,
+                value: cardNumber,
+                onChange: (e) => setCardNumber(e.target.value),
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'expiryDateLabel', style: { display: 'block', marginBottom: '10px' } }, [
+        createElement('label', { key: 'expiryDateLabel', style: { display: 'block', marginBottom: '10px', fontSize: '12px', } }, [
             'Expiration Date',
             createElement('input', {
                 key: 'expiryDateInput',
                 type: 'text',
+                id: 'expiryDateInput',
                 name: 'expiryDate',
-                placeholder: 'MM/YY',
-                maxLength: 10,
+                placeholder: 'MM/YYYY',
+                maxLength: 7,
                 required: true,
+                value: expiryDate,
+                onChange: formatExpiryDate,
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'cvvLabel', style: { display: 'block', marginBottom: '10px' } }, [
+        createElement('label', { key: 'cvvLabel', style: { display: 'block', marginBottom: '10px', fontSize: '12px', } }, [
             'CVV',
             createElement('input', {
                 key: 'cvvInput',
                 type: 'text',
+                id: 'cvvInput',
                 name: 'cvv',
                 placeholder: 'Enter CVV',
                 maxLength: 3,
                 required: true,
+                value: cvv,
+                onChange: (e) => setCvv(e.target.value),
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        createElement('label', { key: 'cardholderNameLabel', style: { display: 'block', marginBottom: '10px' } }, [
+        createElement('label', { key: 'cardholderNameLabel', style: { display: 'block', marginBottom: '10px', fontSize: '12px', } }, [
             'Cardholder Name',
             createElement('input', {
                 key: 'cardholderNameInput',
                 type: 'text',
+                id: 'cardholderNameInput',
                 name: 'cardholderName',
                 placeholder: 'Enter cardholder name',
                 required: true,
+                value: cardholderName,
+                onChange: (e) => setCardholderName(e.target.value),
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-    ]);
-};
-
-
-const SolidPGPaymentContent = () => {
-    // Single form wrapping all input elements
-    return createElement('form', {
-        id: 'solidpg-payment-form',
-        onSubmit: async (event) => {
-            // Prevent default form submission (page refresh)
-            event.preventDefault();
-
-            // Collect input data
-            const formData = new FormData(event.target);
-            const cardData = {
-                cardNumber: formData.get('cardNumber'),
-                expiryDate: formData.get('expiryDate'),
-                cvv: formData.get('cvv'),
-                cardholderName: formData.get('cardholderName'),
-            };
-
-            // Log the data to check if it's collected correctly
-            console.log('Collected Card Data:', cardData);
-
-            // Send data to API (using fetch)
-            try {
-                const response = await fetch('solidpg/v1/payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cardData),
-                });
-
-                // Check if the response is successful
-                if (!response.ok) throw new Error('Payment failed');
-                
-                const result = await response.json();
-                console.log('Payment successful:', result);
-                alert('Payment successful!'); // You can replace this with a success message UI
-            } catch (error) {
-                console.error('Error during payment:', error);
-                alert('Error during payment, please try again.');
+        createElement('button', {
+            key: 'submitButton',
+            type: 'button',
+            id: 'react-custom-btn',
+            onClick: handleSubmit,
+            style: {
+                padding: '15px 20px',
+                fontSize: '16px',
+                width: '100%',
+                backgroundColor: 'black',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
             }
-        },
-    }, [
-        createElement(CardInputForm, { key: 'cardInputForm' }),
-        // createElement('button', { key: 'submitButton', type: 'submit' }, 'Submit Payment'),
+        }, isLoading ? createElement('div', { key: 'loader', style: { textAlign: 'center' } }, [
+            createElement('span', {
+                key: 'spinner',
+                style: {
+                    display: 'inline-block',
+                    width: '16px',
+                    height: '16px',
+                    border: '5px solid rgba(255, 254, 254, 0.2)',
+                    borderTop: '5px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                }
+            })
+        ]) : 'Submit')        
     ]);
 };
 
@@ -117,7 +210,7 @@ const SolidPGPaymentContent = () => {
 const solidPGPaymentMethod = {
     name: 'solidpg', // Unique identifier for the payment method
     label: createElement('span', null, SolidPGLabel()), // Label displayed in the checkout
-    content: createElement(SolidPGPaymentContent),
+    content: createElement(CardInputForm),
     edit: createElement('div', null, SolidPGContent()), // Content displayed in the editor
     canMakePayment: function () {
         return true; // Enable the payment method (add any custom logic if needed)
@@ -126,7 +219,7 @@ const solidPGPaymentMethod = {
     supports: {
         features: ['default', 'products'], // Add necessary features
     },
-    savedTokenComponent: null, 
+    savedTokenComponent: null,
 };
 
 // Register the SolidPG payment method in the WooCommerce blocks registry

@@ -6,27 +6,53 @@ class SolidPG_Payment_Gateway_Frontend
     public function __construct()
     {
         add_shortcode('place_order', array($this, 'place_order'));
-        add_action('woocommerce_review_order_before_submit', array($this, 'add_custom_button'));
+        add_action('woocommerce_review_order_after_submit', array($this, 'add_custom_button'));
         add_action('wp_enqueue_scripts', array($this, 'solidpg_enqueue_frontend_style'));
     }
+
 
     public function solidpg_enqueue_frontend_style()
     {
         // Enqueue the style from your plugin's public/css folder
-        wp_enqueue_style('solidpg-payment-style', plugins_url('/css/style.css', __FILE__));
-        wp_register_script(
-			'solidpg',
-			plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
-			[],
-			'1.0.0',
-			true
-		);
-        $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
+        wp_enqueue_style(
+            'solidpg-payment-style',
+            plugin_dir_url(__FILE__) . 'css/style.css'
+        );
 
-        if ($solidpg_settings['enabled'] == 'yes') {
+        // Fetch the plugin settings
+        $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
+        $merchant_token = isset($solidpg_settings['merchant_token']) ? $solidpg_settings['merchant_token'] : '';
+        $merchant_entity_id = isset($solidpg_settings['merchant_entity_id']) ? $solidpg_settings['merchant_entity_id'] : '';
+        $item_names_string = function_exists('get_all_cart_item_names') ? get_all_cart_item_names() : ''; // Ensure the function exists
+        $return_url = get_permalink(get_option('solidpg_return_page'));
+        $total_price = WC()->cart->total;
+        $home_url = home_url('/');
+        // Localize script data
+        wp_register_script(
+            'solidpg',
+            plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
+            array(), // Add dependencies here if needed
+            '1.0.0',
+            true
+        );
+
+        wp_localize_script('solidpg', 'solidpgData', array(
+            'merchantToken' => $merchant_token,
+            'merchantEntityId' => $merchant_entity_id,
+            'itemNames' => $item_names_string,
+            'returnUrl' => $return_url,
+            'total_price' => $total_price,
+            'home_url' => $home_url
+        ));
+
+        // Enqueue the script if the plugin is enabled
+        $woocommerce_settings = get_option('woocommerce_solidpg_settings', array());
+
+        if (isset($woocommerce_settings['enabled']) && $woocommerce_settings['enabled'] === 'yes') {
             wp_enqueue_script('solidpg');
         }
     }
+
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)
     {
@@ -113,7 +139,24 @@ class SolidPG_Payment_Gateway_Frontend
         global $wpdb;
         $returned_data = $_REQUEST;
         $customer = WC()->session->get('customer');
+        $order_id_solid = $_GET['order_id_solid'] ?? null;
 
+        if ($order_id_solid) {
+            // Check if the meta key 'solidpg_api_id' already exists in the database
+            $existing_orders = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s LIMIT 1",
+                    'solidpg_api_id',
+                    $order_id_solid
+                )
+            );
+
+            if (!empty($existing_orders)) {
+                // If the meta key exists, you can return an error or handle as needed
+                wp_redirect(home_url());
+                exit;
+            }
+        }
         if (function_exists('WC')) {
 
             $table_name = $wpdb->prefix . 'postmeta';
@@ -232,12 +275,12 @@ class SolidPG_Payment_Gateway_Frontend
         $total_quantity = $cart->get_cart_contents_count();
         $total_price = WC()->cart->total;
 
-     
+
         $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
         // echo"<pre>"; print_r($solidpg_settings); exit;
         if ($solidpg_settings['sandbox_enabled'] == 'yes') {
             $solidpg_url = SOLIDPG_SANDBOX_URL;
-        }else{
+        } else {
             $solidpg_url = SOLIDPG_LIVE_URL;
         }
 

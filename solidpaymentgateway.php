@@ -49,8 +49,8 @@ function solidpg_check_wc_existence()
 
     //  Create Thank You Page
     $page_title = __('SolidPG Thankyou Page','solidpg-payments-woo');    
-    $is_page_exist = $wpdb->get_results( "SELECT * from $wpdb->posts where post_title='".$page_title."'" );
-
+    // $is_page_exist = $wpdb->get_results( "SELECT * from $wpdb->posts where post_title='".$page_title."'" );
+    $is_page_exist = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_title = '$page_title' AND post_type = 'page'");
     if( empty( $is_page_exist ) ){
         $page_content = '[place_order]';
         $page = array(
@@ -60,7 +60,9 @@ function solidpg_check_wc_existence()
             'post_type' => 'page',
         );
         $return_page_id = wp_insert_post($page);
-        update_option('solidpg_return_page', $return_page_id);
+      
+            update_option('solidpg_return_page', $return_page_id);
+        
     }    
 }
 
