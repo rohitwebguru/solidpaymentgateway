@@ -78,7 +78,7 @@ add_action('rest_api_init', function() {
 // Define the callback function for the endpoint
 function handle_solidpg_payment(WP_REST_Request $request) {
     $flocash_settings = get_option('woocommerce_solidpg_settings', array());
-      
+     
     if ($flocash_settings['sandbox_enabled'] == 'yes') {
         $url = SOLIDPG_SANDBOX_URL;
     }else{

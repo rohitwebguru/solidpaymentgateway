@@ -86,7 +86,7 @@ class WC_Gateway_SolidPG extends WC_Payment_Gateway
         $this->has_fields = false;
         // $this->supports = array('products');
         // $this->enabled = 'yes';
-        
+    
     }
 
     /**

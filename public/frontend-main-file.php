@@ -21,9 +21,9 @@ class SolidPG_Payment_Gateway_Frontend
 			'1.0.0',
 			true
 		);
-        $flocash_settings = get_option('woocommerce_flocash_settings', array());
+        $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
 
-        if ($flocash_settings['sandbox_enabled'] == 'yes') {
+        if ($solidpg_settings['enabled'] == 'yes') {
             wp_enqueue_script('solidpg');
         }
     }
@@ -232,11 +232,13 @@ class SolidPG_Payment_Gateway_Frontend
         $total_quantity = $cart->get_cart_contents_count();
         $total_price = WC()->cart->total;
 
-        $solidpg_url = SOLIDPG_SANDBOX_URL;
+     
         $solidpg_settings = get_option('woocommerce_solidpg_settings', array());
         // echo"<pre>"; print_r($solidpg_settings); exit;
         if ($solidpg_settings['sandbox_enabled'] == 'yes') {
             $solidpg_url = SOLIDPG_SANDBOX_URL;
+        }else{
+            $solidpg_url = SOLIDPG_LIVE_URL;
         }
 
         // $merchant_email = $solidpg_settings['merchant_email'];
