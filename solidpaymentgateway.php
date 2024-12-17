@@ -7,8 +7,8 @@
  * Description: Woocommerce Payment Gateway Method.
  * Version: 0.1.0
  * License: GPL2
- * License URL: http://www.gnu.org/licenses/gpl-2.0.txt
- * text-domain: solidpg-payment-woo
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain: solid-payment-wo
  *
  * Class WC_Gateway_SolidPG file.
  *
@@ -139,13 +139,13 @@ function handle_solidpg_payment(WP_REST_Request $request) {
 //     }
 // });
 
-add_action(
-	'woocommerce_blocks_payment_method_type_registration',
-	function( PaymentMethodRegistry $payment_method_registry ) {
-        require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';
-		$payment_method_registry->register( new SolidPG_Blocks_Integration() );
-	}
-);
+// add_action(
+// 	'woocommerce_blocks_payment_method_type_registration',
+// 	function( PaymentMethodRegistry $payment_method_registry ) {
+//         require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';
+// 		$payment_method_registry->register( new SolidPG_Blocks_Integration() );
+// 	}
+// );
 
 	
 

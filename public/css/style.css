@@ -1,4 +1,5 @@
-.order-details {
+#solid-css-plugin{
+  .order-details {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
@@ -119,13 +120,6 @@ input {
   -o-transition: none !important;
 }
 
-.container {
-  width: 100%;
-  max-width: 400px;
-  max-height: 251px;
-  height: 54vw;
-  padding: 20px;
-}
 
 #ccsingle {
   position: absolute;
@@ -382,4 +376,14 @@ input {
 .creditcard.flipped {
   -webkit-transform: rotateY(180deg);
   transform: rotateY(180deg);
+}
+
+#custom-palce-order-btn{
+  padding: 10px;
+  margin-top: 17px;
+  background-color: #fa670e;
+  border: none;
+  color: white;
+  font-size: 18px;
+}
 }

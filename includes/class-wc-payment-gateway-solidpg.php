@@ -7,8 +7,8 @@
  * Description: Woocommerce Payment Gateway Method.
  * Version: 0.1.0
  * License: GPL2
- * License URL: http://www.gnu.org/licenses/gpl-2.0.txt
- * text-domain: solid-payment-woo
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain: solid-payment-woo
  *
  * Class WC_Gateway_SolidPG file.
  *

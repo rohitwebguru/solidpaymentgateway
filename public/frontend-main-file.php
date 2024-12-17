@@ -20,7 +20,7 @@ class SolidPG_Payment_Gateway_Frontend
     {
 ?>
 
-        <div class="order-details">
+        <div class="order-details" id="solid-css-plugin">
             <h2>Order Details</h2>
             <table class="order-table">
                 <tr>
@@ -138,7 +138,7 @@ class SolidPG_Payment_Gateway_Frontend
                 $order->set_address($billing_address, 'billing');
                 $order->set_address($billing_address, 'shipping');
                 error_log("order details: " . $order);
-              
+
                 $order->set_payment_method('solidpg-payment-woo');
 
                 foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
@@ -261,7 +261,13 @@ class SolidPG_Payment_Gateway_Frontend
                 <label for="securitycode">Security Code</label>
                 <input id="securitycode" type="text" pattern="[0-9]*" inputmode="numeric">
             </div>
-            <button id="custom-place-order-btn" class="button alt" type="button">Pay with SolidPG</button>
+
+            <button id="custom-place-order-btn" style="padding: 10px;
+                    margin-top: 17px;
+                    background-color: #fa670e;
+                    border: none;
+                    color: white;
+                    font-size: 18px;" class="button btn-primary alt" type="button">Pay with SolidPG</button>
         </div>
 
 
@@ -361,7 +367,7 @@ class SolidPG_Payment_Gateway_Frontend
                     e.preventDefault();
 
                     $.ajax({
-                        url:  '<?php echo esc_url(rest_url('solidpg/v1/payment')); ?>',
+                        url: '<?php echo esc_url(rest_url('solidpg/v1/payment')); ?>',
                         type: "POST",
                         headers: {
                             "Authorization": `Bearer <?php echo esc_attr($merchant_token); ?>`,
@@ -382,7 +388,7 @@ class SolidPG_Payment_Gateway_Frontend
                         },
                         success: function(response) {
                             console.log("Payment Success:", response);
-                            if(response.resultDetails.ExtendedDescription == 'Approved'){
+                            if (response.resultDetails.ExtendedDescription == 'Approved') {
                                 alert('success');
                                 window.location.href = `<?php echo esc_url(home_url('/')); ?>/solidpg-thankyou-page?order_id_solid=${response.id}`;
                             }
