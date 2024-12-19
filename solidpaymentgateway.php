@@ -17,8 +17,8 @@
 
 define('SOLIDPG_SANDBOX_URL', 'https://test.solidpayments.net/v1/payments'); 
 define('SOLIDPG_LIVE_URL', 'https://api.solidpayments.net/v1/payments');
-define('MERCHANT_TOKEN', 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=');
-define('MERCHANT_ENTITY_ID', '8ac7a4c99289e1cd01928b3ff1b50278');
+// define('MERCHANT_TOKEN', 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=');
+// define('MERCHANT_ENTITY_ID', '8ac7a4c99289e1cd01928b3ff1b50278');
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 if (!defined('ABSPATH')) {
@@ -100,63 +100,96 @@ add_action('rest_api_init', function() {
 
 // Define the callback function for the endpoint
 function handle_solidpg_payment(WP_REST_Request $request) {
-    $flocash_settings = get_option('woocommerce_solidpg_settings', array());
-     
-    if ($flocash_settings['sandbox_enabled'] == 'yes') {
-        $url = SOLIDPG_SANDBOX_URL;
-    }else{
-        $url = SOLIDPG_LIVE_URL;
+    try {
+        $flocash_settings = get_option('woocommerce_solidpg_settings', array());
+
+        if ($flocash_settings['sandbox_enabled'] == 'yes') {
+            $url = SOLIDPG_SANDBOX_URL;
+        } else {
+            $url = SOLIDPG_LIVE_URL;
+        }
+
+        $card_number = $request->get_param('card_number');
+        $card_holder = $request->get_param('card_holder');
+        $expiry_month = $request->get_param('card_expiryMonth');
+        $expiry_year = $request->get_param('card_expiryYear');
+        $cvv = $request->get_param('card_cvv');
+        $amount = $request->get_param('amount');
+        $currency = $request->get_param('currency');
+        $payment_brand = $request->get_param('paymentBrand');
+        $payment_type = $request->get_param('paymentType');
+        $return_url = $request->get_param('shopperResultUrl');
+        $merchant_token = $flocash_settings['merchant_token'];
+        $merchant_entity_id = $flocash_settings['merchant_entity_id'];
+        $solidpg_url = $url;
+
+        // Prepare data for SolidPG API
+        $data = [
+            'entityId' => $merchant_entity_id,
+            'amount' => $amount,
+            'currency' => $currency,
+            'paymentBrand' => $payment_brand,
+            'paymentType' => $payment_type,
+            'card.number' => $card_number,
+            'card.holder' => $card_holder,
+            'card.expiryMonth' => $expiry_month,
+            'card.expiryYear' => $expiry_year,
+            'card.cvv' => $cvv,
+            'shopperResultUrl' => $return_url,
+        ];
+
+        // Initialize cURL
+        $ch = curl_init($solidpg_url);
+        if ($ch === false) {
+            throw new Exception('Failed to initialize cURL');
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $merchant_token,
+            'Content-Type: application/x-www-form-urlencoded',
+        ]);
+
+        // Execute the request
+        $response = curl_exec($ch);
+
+        // Check for cURL errors
+        if (curl_errno($ch)) {
+            $error_message = curl_error($ch);
+            curl_close($ch);
+            throw new Exception('cURL Error: ' . $error_message);
+        }
+
+        curl_close($ch);
+
+        // Check if the response is valid
+        if ($response === false) {
+            throw new Exception('SolidPG API returned an invalid response.');
+        }
+
+        // Decode the response
+        $decoded_response = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Failed to decode JSON response: ' . json_last_error_msg());
+        }
+
+        // Return the response back to the client
+        return new WP_REST_Response($decoded_response, 200);
+    } catch (Exception $e) {
+        // Log the error message
+        error_log('Payment processing error: ' . $e->getMessage());
+
+        // Return a detailed error response to the client
+        return new WP_REST_Response([
+            'status' => 'error',
+            'message' => 'Payment processing failed.',
+            'error' => $e->getMessage()
+        ], 500);
     }
-    $card_number = $request->get_param('card_number');
-    $card_holder = $request->get_param('card_holder');
-    $expiry_month = $request->get_param('card_expiryMonth');
-    $expiry_year = $request->get_param('card_expiryYear');
-    $cvv = $request->get_param('card_cvv');
-    $amount = $request->get_param('amount');
-    $currency = $request->get_param('currency');
-    $payment_brand = $request->get_param('paymentBrand');
-    $payment_type = $request->get_param('paymentType');
-    $return_url = $request->get_param('shopperResultUrl');
-    $merchant_token = $flocash_settings['merchant_token']; 
-    $merchant_entity_id = $flocash_settings['merchant_entity_id'];
-    $solidpg_url = $url; 
-
-    // Prepare data for SolidPG API
-    $data = [
-        'entityId' => $merchant_entity_id,
-        'amount' => $amount,
-        'currency' => $currency,
-        'paymentBrand' => $payment_brand,
-        'paymentType' => $payment_type,
-        'card.number' => $card_number,
-        'card.holder' => $card_holder,
-        'card.expiryMonth' => $expiry_month,
-        'card.expiryYear' => $expiry_year,
-        'card.cvv' => $cvv,
-        'shopperResultUrl' => $return_url,
-    ];
-  
-    // Initialize cURL
-    $ch = curl_init($solidpg_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $merchant_token,
-        'Content-Type: application/x-www-form-urlencoded',
-    ]);
-
-    // Execute the request and capture the response
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    // Return the response back to the client
-    if ($response === false) {
-        return new WP_REST_Response('Payment failed', $response, 500);
-    }
-
-    return new WP_REST_Response(json_decode($response), 200);
 }
+
 
 function enqueue_custom_scripts() {
     // Enqueue jQuery

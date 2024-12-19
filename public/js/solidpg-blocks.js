@@ -43,31 +43,24 @@ const CardInputForm = () => {
 
         // Validate card number (must be 16 digits)
         if (!/^\d{16}$/.test(cardNumber)) {
-            alert('Card number must be exactly 16 digits.');
+            setError('Card number must be exactly 16 digits.');
+            isValid = false;            
+        }else if(!/^\d{2}\/\d{4}$/.test(expiryDate)) {
+            setError('Expiration date must be in MM/YYYY format.');
             isValid = false;
-        }
-
-        // Validate expiration date (must be MM/YYYY format)
-        if (!/^\d{2}\/\d{4}$/.test(expiryDate)) {
-            alert('Expiration date must be in MM/YYYY format.');
+        }else if (!/^\d{3}$/.test(cvv)) {
+            setError('CVV must be exactly 3 digits.');
             isValid = false;
-        }
-
-        // Validate CVV (must be exactly 3 digits)
-        if (!/^\d{3}$/.test(cvv)) {
-            alert('CVV must be exactly 3 digits.');
-            isValid = false;
-        }
-
-        // Validate cardholder name
-        if (!cardholderName) {
-            alert('Cardholder name is required.');
+        }else if (!cardholderName) {
+            setError('Cardholder name is required.');
             isValid = false;
         }
 
         if (!isValid) {
             setIsLoading(false); // Hide loader if validation fails
             return;
+        }else{
+            setError('');
         }
 
         // Extract month and year from expiryDate
@@ -87,7 +80,7 @@ const CardInputForm = () => {
             "card_cvv": cvv,
             "shopperResultUrl": solidpgData.returnUrl,
         };
-
+        
         // Send data to the specified URL using fetch
         fetch(`${solidpgData.home_url}/wp-json/solidpg/v1/payment`, {
             method: 'POST',
