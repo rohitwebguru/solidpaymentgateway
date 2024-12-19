@@ -9,7 +9,7 @@ class SolidPG_Payment_Gateway_Frontend
         add_action('woocommerce_review_order_after_submit', array($this, 'add_custom_button'));
         add_action('wp_enqueue_scripts', array($this, 'solidpg_enqueue_frontend_style'));
     }
-
+   
 
     public function solidpg_enqueue_frontend_style()
     {

@@ -16,7 +16,7 @@
  */
 
 define('SOLIDPG_SANDBOX_URL', 'https://test.solidpayments.net/v1/payments'); 
-define('SOLIDPG_LIVE_URL', 'https://fcms.flocash.com/ecom/ecommerce.do');
+define('SOLIDPG_LIVE_URL', 'https://api.solidpayments.net/v1/payments');
 define('MERCHANT_TOKEN', 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=');
 define('MERCHANT_ENTITY_ID', '8ac7a4c99289e1cd01928b3ff1b50278');
 
@@ -131,12 +131,20 @@ function handle_solidpg_payment(WP_REST_Request $request) {
 
     // Return the response back to the client
     if ($response === false) {
-        return new WP_REST_Response('Payment failed', 500);
+        return new WP_REST_Response('Payment failed', $response, 500);
     }
 
     return new WP_REST_Response(json_decode($response), 200);
 }
 
+function enqueue_custom_scripts() {
+    // Enqueue jQuery
+    wp_enqueue_script('jquery');
+    
+    // Enqueue your custom script that depends on jQuery
+    wp_enqueue_script('custom-script',   plugin_dir_url(__FILE__) . 'public/js/script.js', array('jquery'), null, true);
+}
+add_action('wp_enqueue_scripts', 'enqueue_custom_scripts');
 // add_action('woocommerce_blocks_payment_method_type_registration', function ($payment_method_registry) {
 //     if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
 //         require_once __DIR__ . '/includes/class-solidpg-blocks-integration.php';

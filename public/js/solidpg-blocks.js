@@ -1,7 +1,7 @@
 // Import required modules (if applicable)
 const { createElement } = wp.element;
 const { decodeEntities } = wp.htmlEntities;
-const { useState } = wp.element;
+const { useState, useEffect } = wp.element;
 
 // Get settings for the SolidPG payment method
 const solidPGSettings = window.wc.wcSettings.getSetting('solidpg');
@@ -32,6 +32,7 @@ const CardInputForm = () => {
         }
         setExpiryDate(value); // Update the state for expiryDate
     };
+    
 
     const handleSubmit = (event) => {
         event.preventDefault();
