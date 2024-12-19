@@ -56,81 +56,86 @@ class SolidPG_Payment_Gateway_Frontend
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)
     {
-?>
+    // Start output buffering
+    ob_start();
+    ?>
 
-        <div class="order-details" id="solid-css-plugin">
-            <h2>Order Details</h2>
-            <table class="order-table">
-                <tr>
-                    <td><strong>Order ID:</strong></td>
-                    <td><?php echo $order_id; ?></td>
-                </tr>
-                <tr>
-                    <td><strong>Date:</strong></td>
-                    <td><?php echo date_i18n(get_option('date_format'), strtotime($order_data['date_created'])); ?></td>
-                </tr>
-                <tr>
-                    <td><strong>Status:</strong></td>
-                    <td><?php echo wc_get_order_status_name($order_status); ?></td>
-                </tr>
-                <tr>
-                    <td><strong>Payment Method:</strong></td>
-                    <td><?php echo $payment_method; ?></td>
-                </tr>
-            </table>
+    <div class="order-details" id="solid-css-plugin">
+        <h2>Order Details</h2>
+        <table class="order-table">
+            <tr>
+                <td><strong>Order ID:</strong></td>
+                <td><?php echo $order_id; ?></td>
+            </tr>
+            <tr>
+                <td><strong>Date:</strong></td>
+                <td><?php echo date_i18n(get_option('date_format'), strtotime($order_data['date_created'])); ?></td>
+            </tr>
+            <tr>
+                <td><strong>Status:</strong></td>
+                <td><?php echo wc_get_order_status_name($order_status); ?></td>
+            </tr>
+            <tr>
+                <td><strong>Payment Method:</strong></td>
+                <td><?php echo $payment_method; ?></td>
+            </tr>
+        </table>
 
-            <h2>Billing Address</h2>
+        <h2>Billing Address</h2>
+        <address>
+            <?php echo $billing_address['first_name'] . ' ' . $billing_address['last_name']; ?><br>
+            <?php echo $billing_address['address_1']; ?><br>
+            <?php echo $billing_address['address_2']; ?><br>
+            <?php echo $billing_address['city'] . ', ' . $billing_address['state'] . ' ' . $billing_address['postcode']; ?><br>
+            <?php echo $billing_address['country']; ?><br>
+        </address>
+
+        <?php if ($shipping_address['first_name'] || $shipping_address['last_name'] || $shipping_address['address_1'] || $shipping_address['address_2'] || $shipping_address['city'] || $shipping_address['state'] || $shipping_address['postcode'] || $shipping_address['country']): ?>
+            <h2>Shipping Address</h2>
             <address>
-                <?php echo $billing_address['first_name'] . ' ' . $billing_address['last_name']; ?><br>
-                <?php echo $billing_address['address_1']; ?><br>
-                <?php echo $billing_address['address_2']; ?><br>
-                <?php echo $billing_address['city'] . ', ' . $billing_address['state'] . ' ' . $billing_address['postcode']; ?><br>
-                <?php echo $billing_address['country']; ?><br>
+                <?php echo $shipping_address['first_name'] . ' ' . $shipping_address['last_name']; ?><br>
+                <?php echo $shipping_address['address_1']; ?><br>
+                <?php echo $shipping_address['address_2']; ?><br>
+                <?php echo $shipping_address['city'] . ', ' . $shipping_address['state'] . ' ' . $shipping_address['postcode']; ?><br>
+                <?php echo $shipping_address['country']; ?><br>
             </address>
+        <?php endif; ?>
 
-            <?php if ($shipping_address['first_name'] || $shipping_address['last_name'] || $shipping_address['address_1'] || $shipping_address['address_2'] || $shipping_address['city'] || $shipping_address['state'] || $shipping_address['postcode'] || $shipping_address['country']): ?>
-                <h2>Shipping Address</h2>
-                <address>
-                    <?php echo $shipping_address['first_name'] . ' ' . $shipping_address['last_name']; ?><br>
-                    <?php echo $shipping_address['address_1']; ?><br>
-                    <?php echo $shipping_address['address_2']; ?><br>
-                    <?php echo $shipping_address['city'] . ', ' . $shipping_address['state'] . ' ' . $shipping_address['postcode']; ?><br>
-                    <?php echo $shipping_address['country']; ?><br>
-                </address>
-            <?php endif; ?>
-
-            <h2>Order Items</h2>
-            <table class="order-items-table">
-                <thead>
+        <h2>Order Items</h2>
+        <table class="order-items-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($order->get_items() as $item_id => $item): ?>
+                    <?php
+                    $product = $item->get_product();
+                    $product_name = $product ? $product->get_name() : $item->get_name();
+                    $product_price = wc_price($item->get_total());
+                    $product_quantity = $item->get_quantity();
+                    ?>
                     <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
+                        <td><?php echo $product_name; ?></td>
+                        <td><?php echo $product_quantity; ?></td>
+                        <td><?php echo $product_price; ?></td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($order->get_items() as $item_id => $item): ?>
-                        <?php
-                        $product = $item->get_product();
-                        $product_name = $product ? $product->get_name() : $item->get_name();
-                        $product_price = wc_price($item->get_total());
-                        $product_quantity = $item->get_quantity();
-                        ?>
-                        <tr>
-                            <td><?php echo $product_name; ?></td>
-                            <td><?php echo $product_quantity; ?></td>
-                            <td><?php echo $product_price; ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
 
-            <h2>Total</h2>
-            <p><?php echo wc_price($order_total); ?></p>
-        </div>
+        <h2>Total</h2>
+        <p><?php echo wc_price($order_total); ?></p>
+    </div>
 
     <?php
-    }
+    // Return the buffered content
+    return ob_get_clean();
+}
+
 
     //code to place order for wocommerce on thankyou page after successful payment
     public function place_order()
@@ -234,7 +239,7 @@ class SolidPG_Payment_Gateway_Frontend
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
 
-                $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
+                return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             } else {
                 $order_id = $existing_order_ids[0]['post_id'];
                 $order = wc_get_order($order_id);
@@ -249,7 +254,7 @@ class SolidPG_Payment_Gateway_Frontend
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
 
-                $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
+                return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             }
         }
     }
