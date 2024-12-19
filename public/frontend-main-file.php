@@ -144,89 +144,29 @@ class SolidPG_Payment_Gateway_Frontend
         global $wpdb;
         $returned_data = $_REQUEST;
         $customer = WC()->session->get('customer');
-        $order_id_solid = $_GET['order_id_solid'] ?? null;
+        $order_id_solid = isset($_GET['order_id_solid']) ? $_GET['order_id_solid'] : '';
 
         if ($order_id_solid) {
             // Check if the meta key 'solidpg_api_id' already exists in the database
-            $existing_orders = $wpdb->get_var(
+            // $existing_orders = $wpdb->get_var(
+            //     $wpdb->prepare(
+            //         "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s LIMIT 1",
+            //         'solidpg_api_id',
+            //         $order_id_solid
+            //     )
+            // );
+
+            // Find the order IDs with the solidpg_api_id metadata value
+            $existing_orders = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s LIMIT 1",
-                    'solidpg_api_id',
+                    "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'solidpg_api_id' AND meta_value = %s",
                     $order_id_solid
                 )
             );
 
             if (!empty($existing_orders)) {
-                // If the meta key exists, you can return an error or handle as needed
-                wp_redirect(home_url());
-                exit;
-            }
-        }
-        if (function_exists('WC')) {
-
-            $table_name = $wpdb->prefix . 'postmeta';
-
-            $query = $wpdb->prepare("
-        SELECT post_id
-        FROM $table_name
-        WHERE meta_key IN ('trans_id', 'solidpg_order_id')
-        AND meta_value = %s
-    ", $_REQUEST['trans_id']);
-
-            $existing_order_ids = $wpdb->get_results($query, ARRAY_A);
-
-            if (count($existing_order_ids) == 0) {
-
-                //code to place order
-                $cart = WC()->cart;
-                $order = wc_create_order();
-                $order->set_customer_id(get_current_user_id());
-                $billing_address = array(
-                    'first_name' => $customer['first_name'],
-                    'last_name' => $customer['last_name'],
-                    'email' => $customer['email'],
-                    'phone' => $customer['phone'],
-                    'address_1' => $customer['address_1'],
-                    'address_2' => $customer['address_2'],
-                    'city' => $customer['city'],
-                    'state' => $customer['state'],
-                    'postcode' => $customer['postcode'],
-                    'country' => $customer['country'],
-
-                );
-
-                $order->set_address($billing_address, 'billing');
-                $order->set_address($billing_address, 'shipping');
-                error_log("order details: " . $order);
-
-                $order->set_payment_method('solidpg-payment-woo');
-
-                foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
-                    $product_id = $cart_item['product_id'];
-                    $quantity = $cart_item['quantity'];
-                    $variation_id = $cart_item['variation_id'];
-                    $product = wc_get_product($product_id);
-
-                    if ($product) {
-                        $order->add_product($product, $quantity);
-                    }
-                }
-
-                $order_total = $cart->total;
-                $currency_code = get_woocommerce_currency();
-                $order->set_total($order_total);
-                $order->save();
-                // $order->update_status('completed');
-                $cart->empty_cart();
-
-                // save transaction array in postmeta
-                update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
-                update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
-                update_post_meta($order->get_id(), 'solidpg_order_id', $order->get_id());
-                update_post_meta($order->get_id(), 'solidpg_api_id', $_GET['order_id_solid']);
-
-                // code for displaying order details
-                $order_id = $order->get_id();
+            if (function_exists('WC')) {
+                $order_id = $existing_orders[0];
                 $order = wc_get_order($order_id);
                 if (!$order) {
                     echo 'Invalid Order ID.';
@@ -256,7 +196,105 @@ class SolidPG_Payment_Gateway_Frontend
 
                 return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             }
+            }else{
+                if (function_exists('WC')) {
+
+                    $table_name = $wpdb->prefix . 'postmeta';
+        
+                    $query = $wpdb->prepare("
+                SELECT post_id
+                FROM $table_name
+                WHERE meta_key IN ('trans_id', 'solidpg_order_id')
+                AND meta_value = %s
+                  ", $_REQUEST['trans_id']);
+        
+                    $existing_order_ids = $wpdb->get_results($query, ARRAY_A);
+        
+                    if (count($existing_order_ids) == 0) {
+        
+                        //code to place order
+                        $cart = WC()->cart;
+                        $order = wc_create_order();
+                        $order->set_customer_id(get_current_user_id());
+                        $billing_address = array(
+                            'first_name' => $customer['first_name'],
+                            'last_name' => $customer['last_name'],
+                            'email' => $customer['email'],
+                            'phone' => $customer['phone'],
+                            'address_1' => $customer['address_1'],
+                            'address_2' => $customer['address_2'],
+                            'city' => $customer['city'],
+                            'state' => $customer['state'],
+                            'postcode' => $customer['postcode'],
+                            'country' => $customer['country'],
+        
+                        );
+        
+                        $order->set_address($billing_address, 'billing');
+                        $order->set_address($billing_address, 'shipping');
+                        error_log("order details: " . $order);
+        
+                        $order->set_payment_method('solidpg-payment-woo');
+        
+                        foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
+                            $product_id = $cart_item['product_id'];
+                            $quantity = $cart_item['quantity'];
+                            $variation_id = $cart_item['variation_id'];
+                            $product = wc_get_product($product_id);
+        
+                            if ($product) {
+                                $order->add_product($product, $quantity);
+                            }
+                        }
+        
+                        $order_total = $cart->total;
+                        $currency_code = get_woocommerce_currency();
+                        $order->set_total($order_total);
+                        $order->save();
+                        // $order->update_status('completed');
+                        $cart->empty_cart();
+        
+                        // save transaction array in postmeta
+                        update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
+                        update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
+                        update_post_meta($order->get_id(), 'solidpg_order_id', $order->get_id());
+                        update_post_meta($order->get_id(), 'solidpg_api_id', $_GET['order_id_solid']);
+        
+                        // code for displaying order details
+                        $order_id = $order->get_id();
+                        $order = wc_get_order($order_id);
+                        if (!$order) {
+                            echo 'Invalid Order ID.';
+                            return;
+                        }
+                        $order_data = $order->get_data();
+                        $billing_address = $order->get_address('billing');
+                        $shipping_address = $order->get_address('shipping');
+                        $payment_method = $order->get_payment_method();
+                        $order_total = $order->get_total();
+                        $order_status = $order->get_status();
+        
+                        return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
+                    } else {
+                        $order_id = $existing_order_ids[0]['post_id'];
+                        $order = wc_get_order($order_id);
+                        if (!$order) {
+                            echo 'Invalid Order ID.';
+                            return;
+                        }
+                        $order_data = $order->get_data();
+                        $billing_address = $order->get_address('billing');
+                        $shipping_address = $order->get_address('shipping');
+                        $payment_method = $order->get_payment_method();
+                        $order_total = $order->get_total();
+                        $order_status = $order->get_status();
+        
+                        return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
+                    }
+                }
+            }
         }
+       
     }
 
     public function get_all_cart_item_names()

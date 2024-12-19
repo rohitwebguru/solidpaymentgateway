@@ -22,7 +22,8 @@ const CardInputForm = () => {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
     const [cardholderName, setCardholderName] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // State for managing loader visibility
+    const [isLoading, setIsLoading] = useState(false); 
+    const [error, setError] = useState(null);
 
     // Function to format the expiration date as MM/YYYY
     const formatExpiryDate = (event) => {
@@ -100,15 +101,18 @@ const CardInputForm = () => {
             .then(data => {
                 setIsLoading(false); // Hide loader
                 // Handle success response
-                if (data.resultDetails.ExtendedDescription === 'Approved') {
+                if (data?.resultDetails?.ExtendedDescription) {
                     window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}`;
+                }else{
+                    setError(data.result.description);
+                    console.log('hjkhk')
                 }
             })
-            .catch(error => {
-                setIsLoading(false); // Hide loader on error
-                console.error('Error:', error);
-                alert('An error occurred. Please try again later.');
-            });
+            // .catch(error => {
+            //     setIsLoading(false); // Hide loader on error
+            //     console.error('Error:', error);
+            //     alert('An error occurred. Please try again later.');
+            // });
     };
 
     return createElement('div', { id: 'card-input-form', style: { padding: '20px', fontFamily: 'Arial, sans-serif' } }, [
@@ -171,6 +175,15 @@ const CardInputForm = () => {
                 onChange: (e) => setCardholderName(e.target.value),
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
+        ]),
+        error && createElement('div', {
+            id: 'error-div',
+            style: { display: 'block', marginBottom: '10px', fontSize: '12px',background: 'red',textAlign: 'center',color: 'white' }
+        }, [
+            createElement('p', {
+                id: 'error-text',
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' }
+            }, error) // Display the error message
         ]),
         createElement('button', {
             key: 'submitButton',
