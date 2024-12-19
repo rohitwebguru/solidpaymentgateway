@@ -47,23 +47,44 @@ function solidpg_check_wc_existence()
         wp_die('SolidPG Payments Gateway requires WooCommerce to be installed and activated. Please install and activate WooCommerce first.');
     }
 
-    //  Create Thank You Page
-    $page_title = __('SolidPG Thankyou Page','solidpg-payments-woo');    
-    // $is_page_exist = $wpdb->get_results( "SELECT * from $wpdb->posts where post_title='".$page_title."'" );
-    $is_page_exist = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_title = '$page_title' AND post_type = 'page'");
-    if( empty( $is_page_exist ) ){
-        $page_content = '[place_order]';
-        $page = array(
-            'post_title' => $page_title,
-            'post_content' => $page_content,
-            'post_status' => 'publish',
-            'post_type' => 'page',
+    $page_title = 'SolidPG Thankyou Page';
+    $page_content = '[place_order]';
+    $page_slug = 'solidpg-thankyou-page';
+
+    // Check if the page exists
+    $page_check = get_page_by_path($page_slug);
+
+    // If the page does not exist, create it
+    if (empty($page_check)) {
+        // Create the page
+        $new_page = array(
+            'post_title'    => $page_title,
+            'post_content'  => $page_content,
+            'post_status'   => 'publish',
+            'post_type'     => 'page',
+            'post_name'     => $page_slug, // URL slug
+            'post_author'   => 1, // Set the author to admin (ID 1)
         );
-        $return_page_id = wp_insert_post($page);
-      
-            update_option('solidpg_return_page', $return_page_id);
         
-    }    
+        // Insert the page into the database
+        wp_insert_post($new_page);
+    }
+    // $page_title = __('SolidPG Thankyou Page','solidpg-payments-woo');    
+    // // $is_page_exist = $wpdb->get_results( "SELECT * from $wpdb->posts where post_title='".$page_title."'" );
+    // $is_page_exist = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_title = '$page_title' AND post_type = 'page'");
+    // if( empty( $is_page_exist ) ){
+    //     $page_content = '[place_order]';
+    //     $page = array(
+    //         'post_title' => $page_title,
+    //         'post_content' => $page_content,
+    //         'post_status' => 'publish',
+    //         'post_type' => 'page',
+    //     );
+    //     $return_page_id = wp_insert_post($page);
+      
+    //         update_option('solidpg_return_page', $return_page_id);
+        
+    // }    
 }
 
 register_activation_hook(__FILE__, 'solidpg_check_wc_existence');
