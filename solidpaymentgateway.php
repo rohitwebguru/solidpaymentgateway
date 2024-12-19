@@ -16,7 +16,7 @@
  */
 
 define('SOLIDPG_SANDBOX_URL', 'https://test.solidpayments.net/v1/payments'); 
-define('SOLIDPG_LIVE_URL', 'https://api.solidpayments.net/v1/payments');
+define('SOLIDPG_LIVE_URL', 'https://solidpayments.net/v1/payments');
 // define('MERCHANT_TOKEN', 'OGFjN2E0Yzk5Mjg5ZTFjZDAxOTI4YjM5YzRjMzAyNmN8VzpmQjVkeXJ4WWVAeWhIZUEjcGY=');
 // define('MERCHANT_ENTITY_ID', '8ac7a4c99289e1cd01928b3ff1b50278');
 
