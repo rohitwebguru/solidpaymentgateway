@@ -245,6 +245,8 @@ class SolidPG_Payment_Gateway_Frontend
                         $order->save();
                         $order->update_status('processing'); // Set the order status to processing
                         $cart->empty_cart();
+
+                        $order->add_order_note('Order created. Transaction ID: ' . $_GET['order_id_solid']);
         
                         // save transaction array in postmeta
                         update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
