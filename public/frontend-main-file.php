@@ -144,6 +144,7 @@ class SolidPG_Payment_Gateway_Frontend
         global $wpdb;
         $returned_data = $_REQUEST;
         $customer = WC()->session->get('customer');
+       
         $order_id_solid = isset($_GET['order_id_solid']) ? $_GET['order_id_solid'] : '';
 
         if ($order_id_solid) {
@@ -288,7 +289,7 @@ class SolidPG_Payment_Gateway_Frontend
                         $payment_method = $order->get_payment_method();
                         $order_total = $order->get_total();
                         $order_status = $order->get_status();
-        
+                        $order->add_order_note();
                         return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
                     }
                 }
