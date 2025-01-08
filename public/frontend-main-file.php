@@ -146,15 +146,6 @@ class SolidPG_Payment_Gateway_Frontend
         $order_id_solid = isset($_GET['order_id_solid']) ? $_GET['order_id_solid'] : '';
        
         if ($order_id_solid) {
-            // Check if the meta key 'solidpg_api_id' already exists in the database
-            // $existing_orders = $wpdb->get_var(
-            //     $wpdb->prepare(
-            //         "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s LIMIT 1",
-            //         'solidpg_api_id',
-            //         $order_id_solid
-            //     )
-            // );
-
             // Find the order IDs with the solidpg_api_id metadata value
             $existing_orders = $wpdb->get_col(
                 $wpdb->prepare(
@@ -205,12 +196,12 @@ class SolidPG_Payment_Gateway_Frontend
                     $table_name = $wpdb->prefix . 'postmeta';
         
                     $query = $wpdb->prepare("
-                SELECT post_id
-                FROM $table_name
-                WHERE meta_key IN ('trans_id', 'solidpg_order_id')
-                AND meta_value = %s
-                  ", $_REQUEST['trans_id']);
-        
+                            SELECT post_id
+                            FROM $table_name
+                            WHERE meta_key IN ('trans_id', 'solidpg_order_id')
+                            AND meta_value = %s
+                            ", $_REQUEST['trans_id']);
+                    
                     $existing_order_ids = $wpdb->get_results($query, ARRAY_A);
         
                     if (count($existing_order_ids) == 0) {
@@ -254,9 +245,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $currency_code = get_woocommerce_currency();
                         $order->set_total($order_total);
                         $order->save();
-                        // $order->update_status('completed');
+                        $order->update_status('processing'); // Set the order status to processing
                         $cart->empty_cart();
-        
+
                         // save transaction array in postmeta
                         update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
                         update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
