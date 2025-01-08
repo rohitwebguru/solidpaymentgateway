@@ -56,10 +56,8 @@ class SolidPG_Payment_Gateway_Frontend
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)
     {
-    // Start output buffering
     ob_start();
     ?>
-
     <div class="order-details" id="solid-css-plugin">
         <h2>Order Details</h2>
         <table class="order-table">
@@ -144,9 +142,9 @@ class SolidPG_Payment_Gateway_Frontend
         global $wpdb;
         $returned_data = $_REQUEST;
         $customer = WC()->session->get('customer');
-       
+        $order_note = isset($_GET['order_note']) ? $_GET['order_note'] : '';
         $order_id_solid = isset($_GET['order_id_solid']) ? $_GET['order_id_solid'] : '';
-
+       
         if ($order_id_solid) {
             // Check if the meta key 'solidpg_api_id' already exists in the database
             // $existing_orders = $wpdb->get_var(
@@ -179,7 +177,9 @@ class SolidPG_Payment_Gateway_Frontend
                 $payment_method = $order->get_payment_method();
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
-
+                if(!empty($order_note)){
+                    $order->add_order_note($order_note);
+                }
                 return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             } else {
                 $order_id = $existing_order_ids[0]['post_id'];
@@ -194,7 +194,9 @@ class SolidPG_Payment_Gateway_Frontend
                 $payment_method = $order->get_payment_method();
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
-
+                if(!empty($order_note)){
+                    $order->add_order_note($order_note);
+                }
                 return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             }
             }else{
@@ -274,7 +276,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $payment_method = $order->get_payment_method();
                         $order_total = $order->get_total();
                         $order_status = $order->get_status();
-        
+                        if(!empty($order_note)){
+                            $order->add_order_note($order_note);
+                        }
                         return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
                     } else {
                         $order_id = $existing_order_ids[0]['post_id'];
@@ -289,7 +293,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $payment_method = $order->get_payment_method();
                         $order_total = $order->get_total();
                         $order_status = $order->get_status();
-                        $order->add_order_note();
+                        if(!empty($order_note)){
+                            $order->add_order_note($order_note);
+                        }
                         return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
                     }
                 }

@@ -34,6 +34,8 @@ const CardInputForm = () => {
         setExpiryDate(value); // Update the state for expiryDate
     };
     
+    const textarea = document.getElementsByClassName('wc-block-components-textarea'); 
+    const value = textarea ? textarea[0].value : '';
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -79,6 +81,7 @@ const CardInputForm = () => {
             "card_expiryYear": year,
             "card_cvv": cvv,
             "shopperResultUrl": solidpgData.returnUrl,
+            "order_note" : value
         };
         
         // Send data to the specified URL using fetch
@@ -95,10 +98,9 @@ const CardInputForm = () => {
                 setIsLoading(false); // Hide loader
                 // Handle success response
                 if (data?.resultDetails?.ExtendedDescription) {
-                    window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}`;
+                    window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}&order_note=${value?value:''}`;
                 }else{
                     setError(data.result.description);
-                    console.log('hjkhk')
                 }
             })
             // .catch(error => {
