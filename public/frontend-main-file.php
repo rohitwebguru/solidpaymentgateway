@@ -6,11 +6,17 @@ class SolidPG_Payment_Gateway_Frontend
     public function __construct()
     {
         add_shortcode('place_order', array($this, 'place_order'));
-        add_action('woocommerce_review_order_after_submit', array($this, 'add_custom_button'));
+        add_action('woocommerce_review_order_after_submit', array($this, 'add_custom_button_test'));
         add_action('wp_enqueue_scripts', array($this, 'solidpg_enqueue_frontend_style'));
+      
     }
-   
-
+  
+    public function add_custom_button_test()
+    {
+        ?>
+        <div id="solidpg-react-container"></div> <!-- Placeholder for the React component -->
+        <?php
+    }
     public function solidpg_enqueue_frontend_style()
     {
         // Enqueue the style from your plugin's public/css folder
@@ -31,7 +37,7 @@ class SolidPG_Payment_Gateway_Frontend
         wp_register_script(
             'solidpg',
             plugin_dir_url(__FILE__) . '../public/js/solidpg-blocks.js',
-            array(), // Add dependencies here if needed
+            array('wp-element', 'wp-components', 'wc-settings', 'wp-data', 'jquery'), // Add dependencies here if needed
             '1.0.0',
             true
         );
@@ -352,7 +358,7 @@ class SolidPG_Payment_Gateway_Frontend
                 </svg>
             </div>
             <div class="field-container">
-                <label for="expirationdate">Expiration (mm/yy)</label>
+                <label for="expirationdate">Expiration (mm/yyyy)</label>
                 <input id="expirationdate" type="text" pattern="[0-9]*" inputmode="numeric">
             </div>
             <div class="field-container">
