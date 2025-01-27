@@ -2,6 +2,7 @@
 const { createElement } = wp.element;
 const { decodeEntities } = wp.htmlEntities;
 const { useState, useEffect } = wp.element;
+const { createRoot } = wp.element;
 
 // Get settings for the SolidPG payment method
 const solidPGSettings = window.wc.wcSettings.getSetting('solidpg');
@@ -144,7 +145,7 @@ const CardInputForm = () => {
             "card_expiryYear": year,
             "card_cvv": cvv,
             "shopperResultUrl": solidpgData.returnUrl,
-            "order_note" : value
+            "order_note" : value ? value : ''
         };
         
         // Send data to the specified URL using fetch
@@ -298,6 +299,13 @@ const CardInputForm = () => {
     ]);
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('solidpg-react-container');
+    if (container) {
+        const root = createRoot(container); // Create a root
+        root.render(CardInputForm); // Render your React component
+    }
+});
 
 // Register the SolidPG payment method for WooCommerce blocks
 const solidPGPaymentMethod = {
