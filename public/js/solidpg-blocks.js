@@ -23,8 +23,74 @@ const CardInputForm = () => {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
     const [cardholderName, setCardholderName] = useState('');
+    const [errors, setErrors] = useState({}); // Object to store errors for each field
     const [isLoading, setIsLoading] = useState(false); 
-    const [error, setError] = useState(null);
+    const [currentField, setCurrentField] = useState(''); // Track the currently focused field
+
+    const validateField = (fieldName, value) => {
+        let errorMessage = '';
+
+        switch (fieldName) {
+            case 'cardNumber':
+                if (!/^\d{16}$/.test(value)) {
+                    errorMessage = 'Card number must be exactly 16 digits.';
+
+                }
+                break;
+            case 'expiryDate':
+                if (!/^\d{2}\/\d{4}$/.test(value)) {
+                    errorMessage = 'Expiration date must be in MM/YYYY format.';
+                }
+                break;
+            case 'cvv':
+                if (!/^\d{3}$/.test(value)) {
+                    errorMessage = 'CVV must be exactly 3 digits.';
+                }
+                break;
+            case 'cardholderName':
+                if (value.trim() === '') {
+                    errorMessage = 'Cardholder name is required.';
+                }
+                break;
+            default:
+                break;
+        }
+
+        console.log( errorMessage );
+
+        // Update the specific field's error
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [fieldName]: errorMessage,
+        }));
+    };
+
+    const handleInputChange = (fieldName, value) => {
+        // Update the field value
+        switch (fieldName) {
+            case 'cardNumber':
+                setCardNumber(value);
+                break;
+            case 'expiryDate':
+                setExpiryDate(value);
+                break;
+            case 'cvv':
+                setCvv(value);
+                break;
+            case 'cardholderName':
+                setCardholderName(value);
+                break;
+            default:
+                break;
+        }
+
+        // Validate the specific field
+        validateField(fieldName, value);
+    };
+
+    const handleFocus = (fieldName) => {
+        setCurrentField(fieldName); // Set the currently focused field
+    };
 
     // Function to format the expiration date as MM/YYYY
     const formatExpiryDate = (event) => {
@@ -34,11 +100,12 @@ const CardInputForm = () => {
         }
         setExpiryDate(value); // Update the state for expiryDate
     };
-    let value = '';
-    const textarea = document.getElementsByClassName('wc-block-components-textarea'); 
-    if( textarea.length > 0){
-        const value = textarea[0].value ? textarea[0].value : '';
-    }
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            handleSubmit(event);
+        }
+    };   
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -50,29 +117,39 @@ const CardInputForm = () => {
     
         // Validate checkboxes
         if (!termsCheckbox.checked || !refundPolicyCheckbox.checked) {
-            setError('You must agree to the terms and refund policy to proceed.');
+            setErrors('You must agree to the terms and refund policy to proceed.');
             isValid = false;
         }
         // Validate card number (must be 16 digits)
         if (!/^\d{16}$/.test(cardNumber)) {
-            setError('Card number must be exactly 16 digits.');
+            setErrors('Card number must be exactly 16 digits.');
             isValid = false;            
         }else if(!/^\d{2}\/\d{4}$/.test(expiryDate)) {
-            setError('Expiration date must be in MM/YYYY format.');
+            setErrors('Expiration date must be in MM/YYYY format.');
             isValid = false;
         }else if (!/^\d{3}$/.test(cvv)) {
-            setError('CVV must be exactly 3 digits.');
+            setErrors('CVV must be exactly 3 digits.');
             isValid = false;
         }else if (!cardholderName) {
-            setError('Cardholder name is required.');
+            setErrors('Cardholder name is required.');
             isValid = false;
+        
+        // Remove the 'general' key from the errors object if it exists
+        if (errors.hasOwnProperty('general')) {
+            delete errors.general;
         }
+        
+        // Validate all fields on form submission
+        validateField('cardNumber', cardNumber);
+        validateField('expiryDate', expiryDate);
+        validateField('cvv', cvv);
+        validateField('cardholderName', cardholderName);
 
-        if (!isValid) {
+        // Check if there are any errors
+        if (Object.values(errors).some((error) => error)) {
+            console.log('Form contains errors:', errors);
             setIsLoading(false); // Hide loader if validation fails
             return;
-        }else{
-            setError('');
         }
 
         // Extract month and year from expiryDate
@@ -110,7 +187,11 @@ const CardInputForm = () => {
                 if (data?.resultDetails?.ExtendedDescription) {
                     window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}&order_note=${value?value:''}`;
                 }else{
-                    setError(data.result.description);
+                    // If the error doesn't map to a specific field, set it as a general error
+                    setErrors((prevErrors) => ({
+                        ...prevErrors,
+                        general: data.result.description,
+                    }));                    
                 }
             })
             // .catch(error => {
@@ -132,8 +213,10 @@ const CardInputForm = () => {
                 placeholder: 'Enter card number',
                 maxLength: 16,
                 required: true,
-                value: cardNumber,
-                onChange: (e) => setCardNumber(e.target.value),
+                value: cardNumber,                
+                onKeyDown: handleKeyDown,
+                onFocus: () => handleFocus('cardNumber'),
+                onChange: (e) => handleInputChange('cardNumber', e.target.value),
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
@@ -148,7 +231,9 @@ const CardInputForm = () => {
                 maxLength: 7,
                 required: true,
                 value: expiryDate,
-                onChange: formatExpiryDate,
+                onFocus: () => handleFocus('expiryDate'),
+                onChange: (e) => handleInputChange('expiryDate', e.target.value),
+                onKeyDown: handleKeyDown,
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
@@ -163,7 +248,9 @@ const CardInputForm = () => {
                 maxLength: 3,
                 required: true,
                 value: cvv,
-                onChange: (e) => setCvv(e.target.value),
+                onFocus: () => handleFocus('cvv'),
+                onChange: (e) => handleInputChange('cvv', e.target.value),
+                onKeyDown: handleKeyDown,
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
@@ -177,18 +264,29 @@ const CardInputForm = () => {
                 placeholder: 'Enter cardholder name',
                 required: true,
                 value: cardholderName,
-                onChange: (e) => setCardholderName(e.target.value),
+                onFocus: () => handleFocus('cardholderName'),
+                onChange: (e) => handleInputChange('cardholderName', e.target.value),
+                onKeyDown: handleKeyDown,
                 style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
             }),
         ]),
-        error && createElement('div', {
+        // Centralized error message
+        (errors.general || errors[currentField]) &&
+        createElement('div', {
             id: 'error-div',
-            style: { display: 'block', marginBottom: '10px', fontSize: '12px',background: 'red',textAlign: 'center',color: 'white' }
+            style: {
+                display: 'block',
+                marginBottom: '10px',
+                fontSize: '12px',
+                background: 'red',
+                textAlign: 'center',
+                color: 'white',
+            },
         }, [
             createElement('p', {
                 id: 'error-text',
-                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' }
-            }, error) // Display the error message
+                style: { padding: '10px', fontSize: '16px', width: '100%', boxSizing: 'border-box' },
+            }, errors[currentField] || errors.general), // Show currentField error first, fallback to general
         ]),
         createElement('button', {
             key: 'submitButton',
@@ -277,4 +375,4 @@ const solidPGPaymentMethod = {
 // Register the SolidPG payment method in the WooCommerce blocks registry
 if (typeof wc !== 'undefined' && wc.wcBlocksRegistry) {
     wc.wcBlocksRegistry.registerPaymentMethod(solidPGPaymentMethod);
-}
+}}
