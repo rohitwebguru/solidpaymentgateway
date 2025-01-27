@@ -56,10 +56,8 @@ class SolidPG_Payment_Gateway_Frontend
 
     public function display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status)
     {
-    // Start output buffering
     ob_start();
     ?>
-
     <div class="order-details" id="solid-css-plugin">
         <h2>Order Details</h2>
         <table class="order-table">
@@ -144,18 +142,10 @@ class SolidPG_Payment_Gateway_Frontend
         global $wpdb;
         $returned_data = $_REQUEST;
         $customer = WC()->session->get('customer');
+        $order_note = isset($_GET['order_note']) ? $_GET['order_note'] : '';
         $order_id_solid = isset($_GET['order_id_solid']) ? $_GET['order_id_solid'] : '';
-
+       
         if ($order_id_solid) {
-            // Check if the meta key 'solidpg_api_id' already exists in the database
-            // $existing_orders = $wpdb->get_var(
-            //     $wpdb->prepare(
-            //         "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s LIMIT 1",
-            //         'solidpg_api_id',
-            //         $order_id_solid
-            //     )
-            // );
-
             // Find the order IDs with the solidpg_api_id metadata value
             $existing_orders = $wpdb->get_col(
                 $wpdb->prepare(
@@ -178,7 +168,9 @@ class SolidPG_Payment_Gateway_Frontend
                 $payment_method = $order->get_payment_method();
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
-
+                if(!empty($order_note)){
+                    $order->add_order_note($order_note);
+                }
                 return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             } else {
                 $order_id = $existing_order_ids[0]['post_id'];
@@ -193,7 +185,9 @@ class SolidPG_Payment_Gateway_Frontend
                 $payment_method = $order->get_payment_method();
                 $order_total = $order->get_total();
                 $order_status = $order->get_status();
-
+                if(!empty($order_note)){
+                    $order->add_order_note($order_note);
+                }
                 return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
             }
             }else{
@@ -202,12 +196,12 @@ class SolidPG_Payment_Gateway_Frontend
                     $table_name = $wpdb->prefix . 'postmeta';
         
                     $query = $wpdb->prepare("
-                SELECT post_id
-                FROM $table_name
-                WHERE meta_key IN ('trans_id', 'solidpg_order_id')
-                AND meta_value = %s
-                  ", $_REQUEST['trans_id']);
-        
+                            SELECT post_id
+                            FROM $table_name
+                            WHERE meta_key IN ('trans_id', 'solidpg_order_id')
+                            AND meta_value = %s
+                            ", $_REQUEST['trans_id']);
+                    
                     $existing_order_ids = $wpdb->get_results($query, ARRAY_A);
         
                     if (count($existing_order_ids) == 0) {
@@ -251,9 +245,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $currency_code = get_woocommerce_currency();
                         $order->set_total($order_total);
                         $order->save();
-                        // $order->update_status('completed');
+                        $order->update_status('processing'); // Set the order status to processing
                         $cart->empty_cart();
-        
+
                         // save transaction array in postmeta
                         update_post_meta($order->get_id(), 'transaction_details', $_REQUEST);
                         update_post_meta($order->get_id(), 'trans_id', $_REQUEST['trans_id']);
@@ -273,7 +267,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $payment_method = $order->get_payment_method();
                         $order_total = $order->get_total();
                         $order_status = $order->get_status();
-        
+                        if(!empty($order_note)){
+                            $order->add_order_note($order_note);
+                        }
                         return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
                     } else {
                         $order_id = $existing_order_ids[0]['post_id'];
@@ -288,7 +284,9 @@ class SolidPG_Payment_Gateway_Frontend
                         $payment_method = $order->get_payment_method();
                         $order_total = $order->get_total();
                         $order_status = $order->get_status();
-        
+                        if(!empty($order_note)){
+                            $order->add_order_note($order_note);
+                        }
                         return $this->display_order_details($order, $order_id, $order_data, $billing_address, $shipping_address, $payment_method, $order_total, $order_status);
                     }
                 }

@@ -144,6 +144,7 @@ const CardInputForm = () => {
             "card_expiryYear": year,
             "card_cvv": cvv,
             "shopperResultUrl": solidpgData.returnUrl,
+            "order_note" : value
         };
         
         // Send data to the specified URL using fetch
@@ -160,7 +161,7 @@ const CardInputForm = () => {
                 setIsLoading(false); // Hide loader
                 // Handle success response
                 if (data?.resultDetails?.ExtendedDescription) {
-                    window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}`;
+                    window.location.href = `${solidpgData.home_url}/solidpg-thankyou-page?order_id_solid=${data.id}&order_note=${value?value:''}`;
                 }else{
                     // If the error doesn't map to a specific field, set it as a general error
                     setErrors((prevErrors) => ({
