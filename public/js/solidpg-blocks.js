@@ -45,7 +45,14 @@ const CardInputForm = () => {
         setIsLoading(true); // Show loader
 
         let isValid = true;
-
+        const termsCheckbox = document.getElementById('terms');
+        const refundPolicyCheckbox = document.getElementById('refund-policy-checkbox');
+    
+        // Validate checkboxes
+        if (!termsCheckbox.checked || !refundPolicyCheckbox.checked) {
+            setError('You must agree to the terms and refund policy to proceed.');
+            isValid = false;
+        }
         // Validate card number (must be 16 digits)
         if (!/^\d{16}$/.test(cardNumber)) {
             setError('Card number must be exactly 16 digits.');
@@ -192,7 +199,7 @@ const CardInputForm = () => {
                 padding: '15px 20px',
                 fontSize: '16px',
                 width: '100%',
-                backgroundColor: 'black',
+                backgroundColor: '#7a7ff4',
                 color: 'white',
                 border: 'none',
                 cursor: 'pointer',
@@ -213,17 +220,43 @@ const CardInputForm = () => {
                     animation: 'spin 1s linear infinite'
                 }
             })
-        ]) : 'Submit')        
+        ]) : 'Place Order')        
     ]);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+let root = null; // Declare root globally
+
+const renderReactComponent = () => {
     const container = document.getElementById('solidpg-react-container');
+    
     if (container) {
-        const root = createRoot(container); // Create a root
-        root.render(CardInputForm); // Render your React component
+        if (!root) {
+            root = createRoot(container);
+        }
+        
+        // Render or update the React component
+        root.render(createElement(CardInputForm));
     }
-});
+};
+
+// document.addEventListener('DOMContentLoaded', () => {
+    
+
+//     // Monitor DOM changes and render only if the container is replaced
+//     const observer = new MutationObserver((mutations) => {
+//         for (const mutation of mutations) {
+//             if (mutation.type === 'childList') {
+//                 const container = document.getElementById('solidpg-react-container');
+//                 if (container && !root) {
+//                     renderReactComponent();
+//                 }
+//             }
+//         }
+//     });
+
+//     observer.observe(document.body, { childList: true, subtree: true });
+// });
+
 
 // Register the SolidPG payment method for WooCommerce blocks
 const solidPGPaymentMethod = {
@@ -244,5 +277,4 @@ const solidPGPaymentMethod = {
 // Register the SolidPG payment method in the WooCommerce blocks registry
 if (typeof wc !== 'undefined' && wc.wcBlocksRegistry) {
     wc.wcBlocksRegistry.registerPaymentMethod(solidPGPaymentMethod);
-    console.log('Registered Payment Methods:', wc.wcBlocksRegistry.getRegisteredPaymentMethods());
 }

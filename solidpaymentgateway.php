@@ -189,6 +189,19 @@ function handle_solidpg_payment(WP_REST_Request $request) {
         ], 500);
     }
 }
+// add_action('wp_ajax_log_payment_error', 'log_payment_error');
+// add_action('wp_ajax_nopriv_log_payment_error', 'log_payment_error');
+
+// function log_payment_error() {
+//     if (isset($_POST['error_message'])) {
+//         $error_message = sanitize_text_field($_POST['error_message']);
+//         wc_add_notice(__($error_message, 'woocommerce'), 'error');
+
+//         wp_send_json_success('Error logged successfully.');
+//     } else {
+//         wp_send_json_error('No error message provided.');
+//     }
+// }
 
 
 function enqueue_custom_scripts() {
